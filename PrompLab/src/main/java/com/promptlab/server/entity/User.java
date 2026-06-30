@@ -1,6 +1,9 @@
 package com.promptlab.server.entity;
 
 
+
+import java.time.LocalDateTime;
+import org.hibernate.annotations.CreationTimestamp;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -30,7 +33,21 @@ public class User {
 	@Column(nullable = false, unique = true , length = 50)
 	private String username;
 
+	@Column(nullable = false , unique = true , length = 100)
+	private String email;
 	
+	@Column(name = "password_hash" , nullable = false)
+	private String passwordHash;
 	
+	@Column(name = "is_private", nullable = false)
+	@Builder.Default
+	private boolean isPrivate = false;
 	
+	@Column(nullable = false, length = 20)
+	@Builder.Default
+	private String role = "ROLE_USER";
+	
+	@CreationTimestamp
+	@Column(name = "created_at",updatable = false)
+	private LocalDateTime createdAt;
 }
