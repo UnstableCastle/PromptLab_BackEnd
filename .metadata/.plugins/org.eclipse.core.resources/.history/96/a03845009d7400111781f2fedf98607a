@@ -1,0 +1,10 @@
+package com.promptlab.server.entity;
+
+
+
+
+
+public class User {
+	
+
+}
