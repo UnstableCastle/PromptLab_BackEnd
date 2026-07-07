@@ -15,7 +15,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@Table(name="users")
+@Table(name = "users")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -23,50 +23,42 @@ import lombok.Setter;
 @Entity
 @Builder
 public class User {
-	
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "user_id") // Maps to your SQL schema explicitly
-    private long id;
-    
-    @Column(nullable = false, unique = true, length = 50)
-    private String username;
 
-    public String getPasswordHash() {
-		return passwordHash;
-	}
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "user_id") 
+	private long id;
 
-	public void setPasswordHash(String passwordHash) {
-		this.passwordHash = passwordHash;
-	}
+	@Column(nullable = false, unique = true, length = 50)
+	private String username;
 
 	@Column(nullable = false, unique = true, length = 100)
-    private String email;
-    
-    @Column(name = "password_hash", nullable = false)
-    private String passwordHash;
+	private String email;
 
-    @Column(name = "profile_picture", length = 555)
-    private String profilePicture;
+	@Column(name = "password_hash", nullable = false)
+	private String passwordHash;
 
-    @Column(length = 255)
-    private String bio;
-    
-    @Column(name = "is_private", nullable = false)
-    @Builder.Default
-    private boolean isPrivate = false;
+	@Column(name = "profile_picture", length = 555)
+	private String profilePicture;
 
-    @Column(name = "is_suspended", nullable = false)
-    @Builder.Default
-    private boolean isSuspended = false;
-    
-    @Transient
-    @Builder.Default
-    private String role = "ROLE_USER";
-    
-    @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
+	@Column(length = 255)
+	private String bio;
+
+	@Column(name = "is_private", nullable = false)
+	@Builder.Default
+	private boolean isPrivate = false;
+
+	@Column(name = "is_suspended", nullable = false)
+	@Builder.Default
+	private boolean isSuspended = false;
+
+	@Transient
+	@Builder.Default
+	private String role = "ROLE_USER";
+
+	@CreationTimestamp
+	@Column(name = "created_at", updatable = false)
+	private LocalDateTime createdAt;
 
 	public boolean isPrivate() {
 		return isPrivate;
@@ -100,5 +92,12 @@ public class User {
 		this.role = role;
 	}
 
-	
+	public String getPasswordHash() {
+		return passwordHash;
+	}
+
+	public void setPasswordHash(String passwordHash) {
+		this.passwordHash = passwordHash;
+	}
+
 }
