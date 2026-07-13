@@ -1,7 +1,0 @@
-package com.promptlab.server.entity;
-
-@Entity
-public class User {
-	
-
-}

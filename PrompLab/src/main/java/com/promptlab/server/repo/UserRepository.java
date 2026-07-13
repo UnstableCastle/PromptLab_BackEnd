@@ -18,4 +18,5 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // Required for the AuthController to check if an email is taken during registration
     boolean existsByEmail(String email);
     
+    
 }

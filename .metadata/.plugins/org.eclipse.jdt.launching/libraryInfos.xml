@@ -13,4 +13,5 @@
         </endorsedDirs>
     </libraryInfo>
     <libraryInfo home="C:\Program Files (x86)\spring-tools\sts-5.1.1\plugins\org.eclipse.justj.openjdk.hotspot.jre.full.win32.x86_64_25.0.2.v20260203-1141\jre" version="25.0.2"/>
+    <libraryInfo home="C:\Program Files\Java\jdk-21.0.11" version="21.0.11"/>
 </libraryInfos>
