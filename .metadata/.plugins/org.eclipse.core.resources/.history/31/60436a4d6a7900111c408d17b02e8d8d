@@ -1,5 +1,0 @@
-package com.promptlab.server.repo;
-
-public class UserRepository {
-
-}

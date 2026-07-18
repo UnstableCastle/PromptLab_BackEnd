@@ -1,5 +1,0 @@
-package com.promptlab.server.entity;
-
-public class Upvote {
-
-}
