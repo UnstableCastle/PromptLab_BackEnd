@@ -31,7 +31,7 @@ import lombok.Setter;
 public class Report {
 
 	public enum ReportReason{
-		SPAN,OFFENSIVE,NSFW,COPYRIGHT,MISLEADING,OTHER
+		SPAM,OFFENSIVE,NSFW,COPYRIGHT,MISLEADING,OTHER
 		
 	}
 	

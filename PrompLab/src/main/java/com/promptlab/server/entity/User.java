@@ -52,7 +52,7 @@ public class User {
 	@Builder.Default
 	private boolean isSuspended = false;
 
-	@Transient
+	
 	@Builder.Default
 	private String role = "ROLE_USER";
 

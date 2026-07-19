@@ -42,7 +42,7 @@ public class Follow {
 	private User followers;
 
 	@ManyToOne(fetch = FetchType.LAZY, optional = false)
-	@JoinColumn(name="follower_id", nullable = false)
+	@JoinColumn(name="following_id", nullable = false)
 	private User following;
 	
 	@Enumerated(EnumType.STRING)
