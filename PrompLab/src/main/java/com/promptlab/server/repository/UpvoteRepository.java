@@ -1,17 +1,26 @@
 package com.promptlab.server.repository;
 
-import com.promptlab.server.entity.Post;
-import com.promptlab.server.entity.Upvote;
-import com.promptlab.server.entity.User;
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import com.promptlab.server.entity.Post;
+import com.promptlab.server.entity.Upvote;
+import com.promptlab.server.entity.User;
+
 @Repository
 public interface UpvoteRepository extends JpaRepository<Upvote, Long> {
-    // Spring translates these directly into SQL: 
-    // SELECT COUNT(*) FROM upvotes WHERE user_id = ? AND post_id = ?
+
     boolean existsByUserAndPost(User user, Post post);
-    
-    // DELETE FROM upvotes WHERE user_id = ? AND post_id = ?
+
+    Optional<Upvote> findByUserAndPost(User user, Post post);
+
     void deleteByUserAndPost(User user, Post post);
+
+    long countByPost(Post post);
+
+    List<Upvote> findByUser(User user);
+
 }

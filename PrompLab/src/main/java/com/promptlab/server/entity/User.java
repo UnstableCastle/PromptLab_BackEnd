@@ -1,103 +1,99 @@
 package com.promptlab.server.entity;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
+
 import org.hibernate.annotations.CreationTimestamp;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
-@Table(name = "users")
+@Entity
+@Table(
+    name = "users",
+    indexes = {
+        @Index(name = "idx_users_username", columnList = "username"),
+        @Index(name = "idx_users_email", columnList = "email")
+    }
+)
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Entity
 @Builder
-public class User {
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@ToString(exclude = "passwordHash")
+public class User implements Serializable {
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@Column(name = "user_id") 
-	private long id;
+    private static final long serialVersionUID = 1L;
 
-	@Column(nullable = false, unique = true, length = 50)
-	private String username;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
+    @Column(name = "user_id")
+    private Long id;
 
-	@Column(nullable = false, unique = true, length = 100)
-	private String email;
+    @NotBlank
+    @Size(min = 3, max = 50)
+    @Column(nullable = false, unique = true, length = 50)
+    private String username;
 
-	@Column(name = "password_hash", nullable = false)
-	private String passwordHash;
+    @NotBlank
+    @Email
+    @Size(max = 100)
+    @Column(nullable = false, unique = true, length = 100)
+    private String email;
 
-	@Column(name = "profile_picture", length = 555)
-	private String profilePicture;
+    @NotBlank
+    @Column(name = "password_hash", nullable = false, length = 255)
+    private String passwordHash;
 
-	@Column(length = 255)
-	private String bio;
+    @Size(max = 512)
+    @Column(name = "profile_picture", length = 512)
+    private String profilePicture;
 
-	@Column(name = "is_private", nullable = false)
-	@Builder.Default
-	private boolean isPrivate = false;
+    @Size(max = 255)
+    @Column(length = 255)
+    private String bio;
 
-	@Column(name = "is_suspended", nullable = false)
-	@Builder.Default
-	private boolean isSuspended = false;
+    @Builder.Default
+    @Column(name = "is_private", nullable = false)
+    private boolean isPrivate = false;
 
-	
-	@Builder.Default
-	private String role = "ROLE_USER";
+    @Builder.Default
+    @Column(name = "is_suspended", nullable = false)
+    private boolean isSuspended = false;
 
-	@CreationTimestamp
-	@Column(name = "created_at", updatable = false)
-	private LocalDateTime createdAt;
+    @Builder.Default
+    @Column(nullable = false, length = 20)
+    private String role = "ROLE_USER";
 
-	public boolean isPrivate() {
-		return isPrivate;
-	}
-
-	public void setPrivate(boolean isPrivate) {
-		this.isPrivate = isPrivate;
-	}
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
 
 	public boolean isSuspended() {
-		return isSuspended;
-	}
-
-	public void setSuspended(boolean isSuspended) {
-		this.isSuspended = isSuspended;
+		// TODO Auto-generated method stub
+		return false;
 	}
 
 	public String getUsername() {
+		// TODO Auto-generated method stub
 		return username;
 	}
-
-	public void setUsername(String username) {
-		this.username = username;
-	}
-
-	public String getRole() {
-		return role;
-	}
-
-	public void setRole(String role) {
-		this.role = role;
-	}
-
-	public String getPasswordHash() {
-		return passwordHash;
-	}
-
-	public void setPasswordHash(String passwordHash) {
-		this.passwordHash = passwordHash;
-	}
-
 }
