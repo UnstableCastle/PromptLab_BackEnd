@@ -1,0 +1,5 @@
+package com.promptlab.server.controller;
+
+public class AuthController {
+
+}

@@ -8,7 +8,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import com.promptlab.server.entity.User;
-import com.promptlab.server.repo.UserRepository;
+import com.promptlab.server.repository.UserRepository;
 
 @Service
 public class CustomUserDetailsService implements UserDetailsService {

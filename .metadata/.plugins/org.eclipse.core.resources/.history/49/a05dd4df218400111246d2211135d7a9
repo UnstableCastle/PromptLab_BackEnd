@@ -1,0 +1,5 @@
+package com.promptlab.server.dto;
+
+public record UserProfileResponse() {
+
+}
