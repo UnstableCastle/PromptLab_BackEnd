@@ -1,5 +1,6 @@
 package com.promptlab.server.entity;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 import org.hibernate.annotations.CreationTimestamp;
@@ -12,40 +13,67 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 @Entity
-@Table(name = "reports")
+@Table(
+    name = "reports",
+    uniqueConstraints = {
+        @UniqueConstraint(
+            name = "uk_report_user_post",
+            columnNames = {"user_id", "post_id"}
+        )
+    },
+    indexes = {
+        @Index(name = "idx_report_user", columnList = "user_id"),
+        @Index(name = "idx_report_post", columnList = "post_id"),
+        @Index(name = "idx_report_status", columnList = "status")
+    }
+)
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Report {
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@ToString(exclude = {"reporter", "post"})
+public class Report implements Serializable {
 
-	public enum ReportReason{
-		SPAM,OFFENSIVE,NSFW,COPYRIGHT,MISLEADING,OTHER
-		
-	}
-	
-	
-	public enum ReportStatus{
-		OPEN,RESOLVED,DISMISSED
-	}
-	
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@Column(name="report_id")
-	private Long id;
-	
-	@ManyToOne(fetch = FetchType.LAZY, optional = false)
+    private static final long serialVersionUID = 1L;
+
+    public enum ReportReason {
+        SPAM,
+        OFFENSIVE,
+        NSFW,
+        COPYRIGHT,
+        MISLEADING,
+        OTHER
+    }
+
+    public enum ReportStatus {
+        OPEN,
+        RESOLVED,
+        DISMISSED
+    }
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
+    @Column(name = "report_id")
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User reporter;
 
@@ -54,18 +82,15 @@ public class Report {
     private Post post;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 20)
     private ReportReason reason;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
     @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
     private ReportStatus status = ReportStatus.OPEN;
 
     @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
-	
-	
-	
 }
