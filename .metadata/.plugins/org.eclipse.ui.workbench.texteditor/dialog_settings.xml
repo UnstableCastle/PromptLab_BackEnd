@@ -4,4 +4,10 @@
 		<item key="DIALOG_X_ORIGIN" value="243"/>
 		<item key="DIALOG_Y_ORIGIN" value="471"/>
 	</section>
+	<section name="java.lang.Class">
+		<item key="replaceBarOpen" value="false"/>
+		<list key="findhistory">
+			<item value="role"/>
+		</list>
+	</section>
 </section>

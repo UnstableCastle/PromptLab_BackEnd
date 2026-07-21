@@ -8,6 +8,10 @@ import com.promptlab.server.entity.Upvote;
 import com.promptlab.server.repository.PostRepository;
 import com.promptlab.server.repository.UserRepository;
 import com.promptlab.server.repository.UpvoteRepository;
+import com.promptlab.server.service.PostService;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,7 +20,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-public class PostServiceImpl {
+public class PostServiceImpl implements PostService {
 
     private final PostRepository postRepository;
     private final UserRepository userRepository;
@@ -28,76 +32,96 @@ public class PostServiceImpl {
         this.upvoteRepository = upvoteRepository;
     }
 
-    // Helper method to get the currently authenticated user
     private User getCurrentUser() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
 
+    @Override
     @Transactional
     public PostResponse createPost(PostRequest request) {
         User currentUser = getCurrentUser();
 
         Post post = new Post();
         
-        // Mapped to the actual fields in your updated Post.java
-        post.setPromptText(request.content()); 
-        
-        // IMPORTANT: Because 'title' is 'nullable = false' in your Post.java, you MUST set it.
-        // This assumes your PostRequest DTO/Record has a title() method.
         post.setTitle(request.title()); 
-        
+        post.setPromptText(request.promptText()); 
+        post.setModelInfo(request.modelInfo()); 
+        post.setAttachmentUrl(request.attachmentUrl()); 
         post.setUser(currentUser);
         
-        // Note: post.setCreatedAt() is intentionally removed here. 
-        // Your @CreationTimestamp annotation in Post.java handles it automatically!
-
         Post savedPost = postRepository.save(post);
 
+     
         return new PostResponse(
                 savedPost.getId(), 
+                savedPost.getTitle(),
                 savedPost.getPromptText(), 
+                savedPost.getModelInfo(),
+                savedPost.getAttachmentUrl(),
+                savedPost.getUpvoteCount(),
+                savedPost.isExplore(),
                 currentUser.getUsername(), 
                 savedPost.getCreatedAt()
         );
     }
 
+    @Override
     public List<PostResponse> getAllPosts() {
-        // Fetches all posts and maps them to secure DTOs
         return postRepository.findAll().stream()
                 .map(post -> new PostResponse(
                         post.getId(),
-                        post.getPromptText(), // Updated to match Post.java
-                        post.getUser().getUsername(), // Updated to match Post.java
+                        post.getTitle(),
+                        post.getPromptText(), 
+                        post.getModelInfo(),
+                        post.getAttachmentUrl(),
+                        post.getUpvoteCount(),
+                        post.isExplore(),
+                        post.getUser().getUsername(), 
                         post.getCreatedAt()
                 ))
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public Page<PostResponse> getAllPosts(int page, int size) {
+        PageRequest pageRequest = PageRequest.of(page, size);
+        Page<Post> postsPage = postRepository.findAll(pageRequest);
+        
+        return postsPage.map(post -> new PostResponse(
+                post.getId(),
+                post.getTitle(),
+                post.getPromptText(), 
+                post.getModelInfo(),
+                post.getAttachmentUrl(),
+                post.getUpvoteCount(),
+                post.isExplore(),
+                post.getUser().getUsername(), 
+                post.getCreatedAt()
+        ));
+    }
+
+    @Override
     @Transactional
     public void upvotePost(Long postId) {
         User currentUser = getCurrentUser();
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
 
-        // Logic to toggle upvote (if already upvoted, remove it; otherwise, add it)
         boolean alreadyUpvoted = upvoteRepository.existsByUserAndPost(currentUser, post);
         
         if (alreadyUpvoted) {
             upvoteRepository.deleteByUserAndPost(currentUser, post);
-            // Decrement the upvote count on the post entity
             post.setUpvoteCount(post.getUpvoteCount() - 1);
         } else {
             Upvote upvote = new Upvote();
             upvote.setUser(currentUser);
             upvote.setPost(post);
             upvoteRepository.save(upvote);
-            // Increment the upvote count on the post entity
             post.setUpvoteCount(post.getUpvoteCount() + 1);
         }
         
-        // Save the updated upvote count to the database
         postRepository.save(post); 
     }
 }

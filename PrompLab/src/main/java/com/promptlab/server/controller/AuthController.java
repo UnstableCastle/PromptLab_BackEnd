@@ -1,14 +1,16 @@
 package com.promptlab.server.controller;
 
-import com.promptlab.server.dto.AuthenticationRequest;
-import com.promptlab.server.dto.AuthenticationResponse;
-import com.promptlab.server.dto.RegisterRequest;
-import com.promptlab.server.service.AuthService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.promptlab.server.dto.AuthenticationRequest;
+import com.promptlab.server.dto.AuthenticationResponse;
+import com.promptlab.server.dto.RefreshTokenRequest; // Make sure this is imported
+import com.promptlab.server.dto.RegisterRequest;
+import com.promptlab.server.service.AuthService;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -21,12 +23,29 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<AuthenticationResponse> register(@RequestBody RegisterRequest request) {
+    public ResponseEntity<AuthenticationResponse> register(
+            @RequestBody RegisterRequest request) {
         return ResponseEntity.ok(authService.register(request));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthenticationResponse> authenticate(@RequestBody AuthenticationRequest request) {
+    public ResponseEntity<AuthenticationResponse> authenticate(
+            @RequestBody AuthenticationRequest request) {
         return ResponseEntity.ok(authService.authenticate(request));
     }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<AuthenticationResponse> refreshToken(
+            @RequestBody RefreshTokenRequest request) {
+        return ResponseEntity.ok(authService.refreshToken(request));
+    }
+    
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout(@RequestBody RefreshTokenRequest request) {
+        authService.logout(request);
+        return ResponseEntity.ok("Logged out successfully");
+    }
+    
+    
+    
 }
