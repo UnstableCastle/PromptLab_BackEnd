@@ -4,6 +4,9 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.promptlab.server.entity.Post;
@@ -17,7 +20,9 @@ public interface UpvoteRepository extends JpaRepository<Upvote, Long> {
 
     Optional<Upvote> findByUserAndPost(User user, Post post);
 
-    void deleteByUserAndPost(User user, Post post);
+    @Modifying
+    @Query("DELETE FROM Upvote u WHERE u.user = :user AND u.post = :post")
+    void deleteByUserAndPost(@Param("user") User user, @Param("post") Post post);
 
     long countByPost(Post post);
 

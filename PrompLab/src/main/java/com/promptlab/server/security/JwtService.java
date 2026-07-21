@@ -1,5 +1,16 @@
 package com.promptlab.server.security;
 
+import java.util.Collections;
+import java.util.Date;
+import java.util.Map;
+import java.util.function.Function;
+
+import javax.crypto.SecretKey;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Service;
+
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.JwtParser;
@@ -7,15 +18,6 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.stereotype.Service;
-
-import javax.crypto.SecretKey;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.function.Function;
 
 @Service
 public class JwtService {
@@ -31,23 +33,30 @@ public class JwtService {
 
     @PostConstruct
     public void init() {
-        signingKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret));
+
+        if (secret == null || secret.isBlank()) {
+            throw new IllegalStateException("JWT secret is missing.");
+        }
+
+        signingKey = Keys.hmacShaKeyFor(
+                Decoders.BASE64.decode(secret));
 
         jwtParser = Jwts.parserBuilder()
                 .setSigningKey(signingKey)
                 .build();
     }
 
-    // =======================
+    // ==========================
     // Generate Token
-    // =======================
+    // ==========================
 
     public String generateToken(UserDetails userDetails) {
-        return generateToken(new HashMap<>(), userDetails);
+        return generateToken(Collections.emptyMap(), userDetails);
     }
 
-    public String generateToken(Map<String, Object> extraClaims,
-                                UserDetails userDetails) {
+    public String generateToken(
+            Map<String, Object> extraClaims,
+            UserDetails userDetails) {
 
         long now = System.currentTimeMillis();
 
@@ -60,9 +69,9 @@ public class JwtService {
                 .compact();
     }
 
-    // =======================
+    // ==========================
     // Extract Claims
-    // =======================
+    // ==========================
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
@@ -72,8 +81,9 @@ public class JwtService {
         return extractClaim(token, Claims::getExpiration);
     }
 
-    public <T> T extractClaim(String token,
-                              Function<Claims, T> claimsResolver) {
+    public <T> T extractClaim(
+            String token,
+            Function<Claims, T> claimsResolver) {
 
         Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
@@ -82,21 +92,24 @@ public class JwtService {
     private Claims extractAllClaims(String token) {
 
         try {
+
             return jwtParser
                     .parseClaimsJws(token)
                     .getBody();
 
         } catch (JwtException ex) {
-            throw new RuntimeException("Invalid JWT Token", ex);
+
+            throw new JwtException("Invalid JWT Token", ex);
         }
     }
 
-    // =======================
+    // ==========================
     // Validation
-    // =======================
+    // ==========================
 
-    public boolean isTokenValid(String token,
-                                UserDetails userDetails) {
+    public boolean isTokenValid(
+            String token,
+            UserDetails userDetails) {
 
         String username = extractUsername(token);
 
