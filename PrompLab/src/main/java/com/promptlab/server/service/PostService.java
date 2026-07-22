@@ -1,19 +1,10 @@
 package com.promptlab.server.service;
 
-import com.promptlab.server.dto.PostRequest;
-import com.promptlab.server.dto.PostResponse;
-import org.springframework.data.domain.Page; // Ensure this is imported
-
-import java.util.List;
+import com.promptlab.server.dto.*;
+import com.promptlab.server.entity.User;
+import org.springframework.data.domain.Page;
 
 public interface PostService {
-    
-    PostResponse createPost(PostRequest request);
-    
-    List<PostResponse> getAllPosts();
-    
-    // Add the missing method signature here
+    PostResponse createPost(User user, PostRequest request);
     Page<PostResponse> getAllPosts(int page, int size);
-    
-    void upvotePost(Long postId);
 }

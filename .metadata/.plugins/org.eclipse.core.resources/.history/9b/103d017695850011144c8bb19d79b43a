@@ -1,0 +1,76 @@
+package com.promptlab.server.service.impl;
+
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.promptlab.server.entity.Post;
+import com.promptlab.server.entity.Upvote;
+import com.promptlab.server.entity.User;
+import com.promptlab.server.repository.PostRepository;
+import com.promptlab.server.repository.UpvoteRepository;
+import com.promptlab.server.repository.UserRepository;
+import com.promptlab.server.service.UpvoteService;
+
+@Service
+@Transactional
+public class UpvoteServiceImpl implements UpvoteService {
+
+    private final UpvoteRepository upvoteRepository;
+    private final PostRepository postRepository;
+    private final UserRepository userRepository;
+
+    public UpvoteServiceImpl(
+            UpvoteRepository upvoteRepository,
+            PostRepository postRepository,
+            UserRepository userRepository) {
+
+        this.upvoteRepository = upvoteRepository;
+        this.postRepository = postRepository;
+        this.userRepository = userRepository;
+    }
+
+    private User getCurrentUser() {
+
+        String username = SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getName();
+
+        return userRepository.findByUsername(username)
+                .orElseThrow(() ->
+                        new RuntimeException("Authenticated user not found."));
+    }
+
+    @Override
+    public void toggleUpvote(Long postId) {
+
+        User currentUser = getCurrentUser();
+
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() ->
+                        new RuntimeException("Post not found."));
+
+        boolean alreadyUpvoted =
+                upvoteRepository.existsByUserAndPost(currentUser, post);
+
+        if (alreadyUpvoted) {
+
+            upvoteRepository.deleteByUserAndPost(currentUser, post);
+
+            post.setUpvoteCount(post.getUpvoteCount() - 1);
+
+        } else {
+
+            Upvote upvote = new Upvote();
+            upvote.setUser(currentUser);
+            upvote.setPost(post);
+
+            upvoteRepository.save(upvote);
+
+            post.setUpvoteCount(post.getUpvoteCount() + 1);
+        }
+
+        postRepository.save(post);
+    }
+}

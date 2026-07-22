@@ -1,0 +1,117 @@
+package com.promptlab.server.service.impl;
+
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.promptlab.server.dto.*;
+import com.promptlab.server.entity.*;
+import com.promptlab.server.repository.*;
+import com.promptlab.server.security.JwtService;
+import com.promptlab.server.service.AuthService;
+
+import java.time.Instant;
+import java.util.UUID;
+
+@Service
+@Transactional
+public class AuthServiceImpl implements AuthService {
+
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
+    private final AuthenticationManager authenticationManager;
+    private final RefreshTokenRepository refreshTokenRepository;
+
+    public AuthServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder,
+                           JwtService jwtService, AuthenticationManager authenticationManager,
+                           RefreshTokenRepository refreshTokenRepository) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
+        this.authenticationManager = authenticationManager;
+        this.refreshTokenRepository = refreshTokenRepository;
+    }
+
+    @Override
+    public AuthenticationResponse register(RegisterRequest request) {
+        if (userRepository.existsByUsername(request.username())) {
+            throw new RuntimeException("Username already exists.");
+        }
+        if (userRepository.existsByEmail(request.email())) {
+            throw new RuntimeException("Email already exists.");
+        }
+
+        User user = User.builder()
+                .username(request.username())
+                .email(request.email())
+                .passwordHash(passwordEncoder.encode(request.password()))
+                .role(Role.ROLE_USER)
+                .isPrivate(false)
+                .isSuspended(false)
+                .build();
+
+        userRepository.save(user);
+
+        String accessToken = jwtService.generateToken(user);
+        RefreshToken refreshToken = createRefreshToken(user);
+
+        return new AuthenticationResponse(accessToken, refreshToken.getToken(), "Bearer", user.getEmail(), user.getUsername(), user.getRole().name());
+    }
+
+    @Override
+    public AuthenticationResponse authenticate(AuthenticationRequest request) {
+    	
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(request.email(), request.password())
+        );
+        
+
+        User user = userRepository.findByEmail(request.email())
+                .orElseThrow(() -> new RuntimeException("User not found."));
+        
+
+        String accessToken = jwtService.generateToken(user);
+        RefreshToken refreshToken = createRefreshToken(user);
+        System.out.println("-------------------------------------------------");
+
+        return new AuthenticationResponse(accessToken, refreshToken.getToken(), "Bearer",  user.getEmail(),user.getUsername(), user.getRole().name());
+    }
+
+    @Override
+    public AuthenticationResponse refreshToken(RefreshTokenRequest request) {
+        return refreshTokenRepository.findByToken(request.refreshToken())
+                .map(this::verifyExpiration)
+                .map(RefreshToken::getUser)
+                .map(user -> {
+                    refreshTokenRepository.deleteByToken(request.refreshToken());
+                    String accessToken = jwtService.generateToken(user);
+                    RefreshToken newRefreshToken = createRefreshToken(user);
+                    return new AuthenticationResponse(accessToken, newRefreshToken.getToken(), "Bearer", user.getEmail(), user.getUsername(), user.getRole().name());
+                })
+                .orElseThrow(() -> new RuntimeException("Refresh token is invalid or missing!"));
+    }
+
+    @Override
+    public void logout(RefreshTokenRequest request) {
+        refreshTokenRepository.deleteByToken(request.refreshToken());
+    }
+
+    private RefreshToken createRefreshToken(User user) {
+        RefreshToken refreshToken = new RefreshToken();
+        refreshToken.setUser(user);
+        refreshToken.setExpiryDate(Instant.now().plusMillis(604800000));
+        refreshToken.setToken(UUID.randomUUID().toString());
+        return refreshTokenRepository.save(refreshToken);
+    }
+
+    private RefreshToken verifyExpiration(RefreshToken token) {
+        if (token.getExpiryDate().compareTo(Instant.now()) < 0) {
+            refreshTokenRepository.delete(token);
+            throw new RuntimeException("Refresh token has expired.");
+        }
+        return token;
+    }
+}

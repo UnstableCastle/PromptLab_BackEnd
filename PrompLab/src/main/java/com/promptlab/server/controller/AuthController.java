@@ -1,15 +1,8 @@
 package com.promptlab.server.controller;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.promptlab.server.dto.AuthenticationRequest;
-import com.promptlab.server.dto.AuthenticationResponse;
-import com.promptlab.server.dto.RefreshTokenRequest; // Make sure this is imported
-import com.promptlab.server.dto.RegisterRequest;
+import org.springframework.web.bind.annotation.*;
+import com.promptlab.server.dto.*;
 import com.promptlab.server.service.AuthService;
 
 @RestController
@@ -23,20 +16,18 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<AuthenticationResponse> register(
-            @RequestBody RegisterRequest request) {
-        return ResponseEntity.ok(authService.register(request));
+    public ResponseEntity<String> register(@RequestBody RegisterRequest request) {
+        authService.register(request);
+        return ResponseEntity.ok("User registered successfully");
     }
-
     @PostMapping("/login")
-    public ResponseEntity<AuthenticationResponse> authenticate(
-            @RequestBody AuthenticationRequest request) {
+    public ResponseEntity<AuthenticationResponse> authenticate(@RequestBody AuthenticationRequest request) {
+    	
         return ResponseEntity.ok(authService.authenticate(request));
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<AuthenticationResponse> refreshToken(
-            @RequestBody RefreshTokenRequest request) {
+    public ResponseEntity<AuthenticationResponse> refreshToken(@RequestBody RefreshTokenRequest request) {
         return ResponseEntity.ok(authService.refreshToken(request));
     }
     
@@ -45,7 +36,4 @@ public class AuthController {
         authService.logout(request);
         return ResponseEntity.ok("Logged out successfully");
     }
-    
-    
-    
 }

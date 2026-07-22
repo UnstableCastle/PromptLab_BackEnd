@@ -1,0 +1,11 @@
+package com.promptlab.server.service;
+
+import com.promptlab.server.dto.PostRequest;
+import com.promptlab.server.dto.PostResponse;
+import com.promptlab.server.entity.User;
+import org.springframework.data.domain.Page;
+
+public interface PostService {
+    PostResponse createPost(User user, PostRequest request)[cite: 31];
+    Page<PostResponse> getAllPosts(int page, int size)[cite: 31];
+}

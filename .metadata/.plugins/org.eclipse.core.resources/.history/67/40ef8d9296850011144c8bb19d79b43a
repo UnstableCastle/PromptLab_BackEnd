@@ -1,0 +1,45 @@
+package com.promptlab.server.service.impl;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.promptlab.server.entity.Post;
+import com.promptlab.server.entity.Upvote;
+import com.promptlab.server.entity.User;
+import com.promptlab.server.repository.PostRepository;
+import com.promptlab.server.repository.UpvoteRepository;
+import com.promptlab.server.service.UpvoteService;
+
+@Service
+@Transactional
+public class UpvoteServiceImpl implements UpvoteService {
+
+    private final UpvoteRepository upvoteRepository;
+    private final PostRepository postRepository;
+
+    public UpvoteServiceImpl(UpvoteRepository upvoteRepository, PostRepository postRepository) {
+        this.upvoteRepository = upvoteRepository;
+        this.postRepository = postRepository;
+    }
+
+    @Override
+    public void toggleUpvote(Long postId, User user) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("Post not found."));
+
+        boolean alreadyUpvoted = upvoteRepository.existsByUserAndPost(user, post);
+
+        if (alreadyUpvoted) {
+            upvoteRepository.deleteByUserAndPost(user, post);
+            post.setUpvoteCount(post.getUpvoteCount() - 1);
+        } else {
+            Upvote upvote = new Upvote();
+            upvote.setUser(user);
+            upvote.setPost(post);
+            upvoteRepository.save(upvote);
+            post.setUpvoteCount(post.getUpvoteCount() + 1);
+        }
+
+        postRepository.save(post);
+    }
+}
