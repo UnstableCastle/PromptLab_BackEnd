@@ -1,12 +1,9 @@
 package com.promptlab.server.controller;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+import com.promptlab.server.entity.User;
 import com.promptlab.server.service.FollowService;
 
 @RestController
@@ -20,14 +17,18 @@ public class UserController {
     }
 
     @PostMapping("/{userId}/follow")
-    public ResponseEntity<Void> followUser(@PathVariable Long userId) {
-        followService.followUser(userId);
+    public ResponseEntity<Void> followUser(
+            @PathVariable Long userId,
+            @AuthenticationPrincipal User user) {
+        followService.followUser(user, userId);
         return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/{userId}/unfollow")
-    public ResponseEntity<Void> unfollowUser(@PathVariable Long userId) {
-        followService.unfollowUser(userId);
+    public ResponseEntity<Void> unfollowUser(
+            @PathVariable Long userId,
+            @AuthenticationPrincipal User user) {
+        followService.unfollowUser(user, userId);
         return ResponseEntity.ok().build();
     }
 }

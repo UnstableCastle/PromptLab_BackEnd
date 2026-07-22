@@ -23,16 +23,12 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import lombok.ToString;
 
 @Entity
 @Table(
     name = "follows",
     uniqueConstraints = {
-        @UniqueConstraint(
-            name = "uk_follower_following",
-            columnNames = {"follower_id", "following_id"}
-        )
+        @UniqueConstraint(name = "uk_follower_following", columnNames = {"follower_id", "following_id"})
     },
     indexes = {
         @Index(name = "idx_follower", columnList = "follower_id"),
@@ -44,7 +40,6 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@ToString(exclude = {"follower", "following"})
 public class Follow implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -76,21 +71,4 @@ public class Follow implements Serializable {
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
-
-    // ==========================
-    // equals() and hashCode()
-    // ==========================
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Follow)) return false;
-        Follow other = (Follow) o;
-        return id != null && id.equals(other.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return getClass().hashCode();
-    }
 }

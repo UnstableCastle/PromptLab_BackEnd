@@ -21,16 +21,12 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import lombok.ToString;
 
 @Entity
 @Table(
     name = "upvotes",
     uniqueConstraints = {
-        @UniqueConstraint(
-            name = "uk_user_post_upvote",
-            columnNames = {"user_id", "post_id"}
-        )
+        @UniqueConstraint(name = "uk_user_post_upvote", columnNames = {"user_id", "post_id"})
     },
     indexes = {
         @Index(name = "idx_upvote_user", columnList = "user_id"),
@@ -42,7 +38,6 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@ToString(exclude = {"user", "post"})
 public class Upvote implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -63,21 +58,4 @@ public class Upvote implements Serializable {
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
-
-    // ==========================
-    // equals() and hashCode()
-    // ==========================
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Upvote)) return false;
-        Upvote other = (Upvote) o;
-        return id != null && id.equals(other.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return getClass().hashCode();
-    }
 }

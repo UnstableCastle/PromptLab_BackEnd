@@ -83,23 +83,4 @@ public class Post implements Serializable {
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
-
-    // ==========================
-    // equals() and hashCode()
-    // ==========================
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Post)) return false;
-        Post other = (Post) o;
-        // Use getter for 'other' to ensure Hibernate proxies initialize the ID
-        return id != null && id.equals(other.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        // Constant hash code is best practice for JPA entities with generated IDs
-        return getClass().hashCode();
-    }
 }

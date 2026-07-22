@@ -1,0 +1,61 @@
+package com.promptlab.server.service.impl;
+
+import com.promptlab.server.dto.UserProfileResponse;
+import com.promptlab.server.entity.User;
+import com.promptlab.server.repository.FollowRepository;
+import com.promptlab.server.repository.PostRepository;
+import com.promptlab.server.repository.UserRepository;
+import com.promptlab.server.service.UserService;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@Transactional(readOnly = true)
+public class UserServiceImpl implements UserService {
+
+    private final UserRepository userRepository;
+    private final FollowRepository followRepository;
+    private final PostRepository postRepository;
+
+    public UserServiceImpl(UserRepository userRepository, FollowRepository followRepository, PostRepository postRepository) {
+        this.userRepository = userRepository;
+        this.followRepository = followRepository;
+        this.postRepository = postRepository;
+    }
+
+    @Override
+    public UserProfileResponse getUserProfile(String username) {
+        // 1. Fetch Target User
+        User targetUser = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // 2. Fetch Current Authenticated User (to check if they follow the target)
+        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+        boolean followedByCurrentUser = false;
+        
+        if (!currentUsername.equals("anonymousUser")) {
+            User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
+            if (currentUser != null) {
+                followedByCurrentUser = followRepository.existsByFollowerAndFollowing(currentUser, targetUser);
+            }
+        }
+
+        // 3. Aggregate Counts
+        long followerCount = followRepository.countByFollowing(targetUser);
+        long followingCount = followRepository.countByFollower(targetUser);
+        long postCount = postRepository.countByUser(targetUser);
+
+        // 4. Map to DTO
+        return new UserProfileResponse(
+                targetUser.getUsername(),
+                targetUser.getBio(), // Assuming bio exists in your User entity
+                targetUser.getProfilePicture(), // Assuming profilePicture exists
+                targetUser.isPrivate(),
+                followerCount,
+                followingCount,
+                postCount,
+                followedByCurrentUser
+        );
+    }
+}

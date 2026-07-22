@@ -1,0 +1,111 @@
+package com.promptlab.server.service.impl;
+
+import com.promptlab.server.dto.PostRequest;
+import com.promptlab.server.dto.PostResponse;
+import com.promptlab.server.entity.Post;
+import com.promptlab.server.entity.User;
+import com.promptlab.server.entity.Upvote;
+import com.promptlab.server.repository.PostRepository;
+import com.promptlab.server.repository.UserRepository;
+import com.promptlab.server.repository.UpvoteRepository;
+import com.promptlab.server.service.PostService;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest; // Added import for pagination
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+public class PostServiceImpl implements PostService {
+
+    private final PostRepository postRepository;
+    private final UserRepository userRepository;
+    private final UpvoteRepository upvoteRepository;
+
+    public PostServiceImpl(PostRepository postRepository, UserRepository userRepository, UpvoteRepository upvoteRepository) {
+        this.postRepository = postRepository;
+        this.userRepository = userRepository;
+        this.upvoteRepository = upvoteRepository;
+    }
+
+    // Helper method to get the currently authenticated user
+    private User getCurrentUser() {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+    }
+
+    @Override
+    @Transactional
+    public PostResponse createPost(PostRequest request) {
+        User currentUser = getCurrentUser();
+
+        Post post = new Post();
+        
+        post.setPromptText(request.content()); 
+        post.setTitle(request.title()); 
+        post.setUser(currentUser);
+        
+        Post savedPost = postRepository.save(post);
+
+        return new PostResponse(
+                savedPost.getId(), 
+                savedPost.getPromptText(), 
+                currentUser.getUsername(), 
+                savedPost.getCreatedAt()
+        );
+    }
+
+    @Override
+    public List<PostResponse> getAllPosts() {
+        return postRepository.findAll().stream()
+                .map(post -> new PostResponse(
+                        post.getId(),
+                        post.getPromptText(), 
+                        post.getUser().getUsername(), 
+                        post.getCreatedAt()
+                ))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public void upvotePost(Long postId) {
+        User currentUser = getCurrentUser();
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("Post not found"));
+
+        boolean alreadyUpvoted = upvoteRepository.existsByUserAndPost(currentUser, post);
+        
+        if (alreadyUpvoted) {
+            upvoteRepository.deleteByUserAndPost(currentUser, post);
+            post.setUpvoteCount(post.getUpvoteCount() - 1);
+        } else {
+            Upvote upvote = new Upvote();
+            upvote.setUser(currentUser);
+            upvote.setPost(post);
+            upvoteRepository.save(upvote);
+            post.setUpvoteCount(post.getUpvoteCount() + 1);
+        }
+        
+        postRepository.save(post); 
+    }
+
+    @Override
+    public Page<PostResponse> getAllPosts(int page, int size) {
+        // Implemented pagination logic using Spring Data's PageRequest
+        PageRequest pageRequest = PageRequest.of(page, size);
+        Page<Post> postsPage = postRepository.findAll(pageRequest);
+        
+        return postsPage.map(post -> new PostResponse(
+                post.getId(),
+                post.getPromptText(),
+                post.getUser().getUsername(),
+                post.getCreatedAt()
+        ));
+    }
+}
