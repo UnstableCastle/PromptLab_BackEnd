@@ -7,6 +7,7 @@ import com.promptlab.server.entity.User;
 import com.promptlab.server.service.FollowService;
 
 @RestController
+@CrossOrigin(origins = "http://localhost:5173")
 @RequestMapping("/api/users")
 public class UserController {
 
