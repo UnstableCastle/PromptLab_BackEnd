@@ -10,6 +10,7 @@ import com.promptlab.server.entity.User;
 import com.promptlab.server.service.*;
 
 @RestController
+@CrossOrigin(origins = "http://localhost:5173")
 @RequestMapping("/api/posts")
 public class PostController {
 

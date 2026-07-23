@@ -1,0 +1,121 @@
+package com.promptlab.server.service.impl;
+
+import java.time.Instant;
+
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.promptlab.server.dto.*;
+import com.promptlab.server.entity.*;
+import com.promptlab.server.repository.*;
+import com.promptlab.server.security.JwtService;
+import com.promptlab.server.service.AuthService;
+
+@Service
+@Transactional
+public class AuthServiceImpl implements AuthService {
+
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
+    private final AuthenticationManager authenticationManager;
+    private final RefreshTokenRepository refreshTokenRepository;
+
+    public AuthServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder,
+                           JwtService jwtService, AuthenticationManager authenticationManager,
+                           RefreshTokenRepository refreshTokenRepository) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
+        this.authenticationManager = authenticationManager;
+        this.refreshTokenRepository = refreshTokenRepository;
+    }
+
+    // 1. Separation of Concerns: Registration only handles account creation without generating tokens
+    @Override
+    public void register(RegisterRequest request) {
+        if (userRepository.existsByUsername(request.username())) {
+            throw new RuntimeException("Username already exists.");
+        }
+        if (userRepository.existsByEmail(request.email())) {
+            throw new RuntimeException("Email already exists.");
+        }
+
+        User user = User.builder()
+                .username(request.username())
+                .email(request.email())
+                .passwordHash(passwordEncoder.encode(request.password()))
+                .role(Role.ROLE_USER)
+                .isPrivate(false)
+                .isSuspended(false)
+                .build();
+
+        userRepository.save(user);
+    }
+
+    // 2. Stateless Access Control & Database-Backed Refresh Sessions
+    @Override
+    public AuthenticationResponse authenticate(AuthenticationRequest request) {
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(request.email(), request.password())
+        );
+
+        User user = userRepository.findByEmail(request.email())
+                .orElseThrow(() -> new RuntimeException("User not found."));
+
+        // Generate short-lived stateless access token
+        String accessToken = jwtService.generateAccessToken(user);
+        
+        // Save or update non-expiring refresh token in database for session control
+        RefreshToken refreshTokenEntity = createOrUpdateRefreshToken(user);
+
+        return new AuthenticationResponse(
+                accessToken, 
+                refreshTokenEntity.getToken(), 
+                "Bearer", 
+                user.getUsername(), 
+                user.getEmail(), 
+                user.getRole().name()
+        );
+    }
+
+    @Override
+    public AuthenticationResponse refreshToken(RefreshTokenRequest request) {
+        return refreshTokenRepository.findByToken(request.refreshToken())
+                .map(RefreshToken::getUser)
+                .map(user -> {
+                    String accessToken = jwtService.generateAccessToken(user);
+                    RefreshToken refreshTokenEntity = createOrUpdateRefreshToken(user);
+                    return new AuthenticationResponse(
+                            accessToken, 
+                            refreshTokenEntity.getToken(), 
+                            "Bearer", 
+                            user.getUsername(), 
+                            user.getEmail(), 
+                            user.getRole().name()
+                    );
+                })
+                .orElseThrow(() -> new RuntimeException("Refresh token is invalid or missing!"));
+    }
+
+    // 3. Complete Revocation on Logout: Deletes the token from DB to instantly neutralize the session
+    @Override
+    @Transactional
+    public void logout(RefreshTokenRequest request) {
+        refreshTokenRepository.deleteByToken(request.refreshToken());
+        refreshTokenRepository.flush();
+    }
+
+    private RefreshToken createOrUpdateRefreshToken(User user) {
+        RefreshToken refreshToken = refreshTokenRepository.findByUser(user)
+                .orElse(new RefreshToken());
+        
+        refreshToken.setUser(user);
+        refreshToken.setToken(jwtService.generateRefreshToken());
+        
+        return refreshTokenRepository.save(refreshToken);
+    }
+}
