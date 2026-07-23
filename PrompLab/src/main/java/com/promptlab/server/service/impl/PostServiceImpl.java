@@ -61,4 +61,50 @@ public class PostServiceImpl implements PostService {
                         post.getCreatedAt()
                 ));
     }
+
+    @Override
+    @Transactional
+    public Object updatePost(Long postId, User user, PostRequest request) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("Post not found with id: " + postId));
+
+        // Ensure only the owner can update their post
+        if (!post.getUser().getId().equals(user.getId())) {
+            throw new RuntimeException("Unauthorized to update this post");
+        }
+
+        // Update fields if provided
+        post.setTitle(request.title());
+        post.setPromptText(request.promptText());
+        post.setModelInfo(request.modelInfo());
+        post.setAttachmentUrl(request.attachmentUrl());
+
+        Post updatedPost = postRepository.save(post);
+
+        return new PostResponse(
+                updatedPost.getId(),
+                updatedPost.getTitle(),
+                updatedPost.getPromptText(),
+                updatedPost.getModelInfo(),
+                updatedPost.getAttachmentUrl(),
+                updatedPost.getUpvoteCount(),
+                updatedPost.isExplore(),
+                user.getUsername(),
+                updatedPost.getCreatedAt()
+        );
+    }
+
+    @Override
+    @Transactional
+    public void deletePost(Long postId, User user) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("Post not found with id: " + postId));
+
+        // Ensure only the owner can delete their post
+        if (!post.getUser().getId().equals(user.getId())) {
+            throw new RuntimeException("Unauthorized to delete this post");
+        }
+
+        postRepository.delete(post);
+    }
 }
