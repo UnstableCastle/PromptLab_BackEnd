@@ -1,15 +1,10 @@
 package com.promptlab.server.service;
 
-import java.util.List;
-
-import com.promptlab.server.dto.PostRequest;
-import com.promptlab.server.dto.PostResponse;
+import com.promptlab.server.dto.*;
+import com.promptlab.server.entity.User;
+import org.springframework.data.domain.Page;
 
 public interface PostService {
-
-    PostResponse createPost(PostRequest request);
-
-    List<PostResponse> getAllPosts();
-
-    void upvotePost(Long postId);
+    PostResponse createPost(User user, PostRequest request);
+    Page<PostResponse> getAllPosts(int page, int size);
 }

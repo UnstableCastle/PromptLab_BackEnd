@@ -1,6 +1,7 @@
 package com.promptlab.server.service;
 
-public interface UpvoteService {
+import com.promptlab.server.entity.User;
 
-    void toggleUpvote(Long postId);
+public interface UpvoteService {
+    void toggleUpvote(Long postId, User user);
 }

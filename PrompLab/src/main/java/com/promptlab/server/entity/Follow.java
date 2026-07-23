@@ -9,7 +9,6 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import lombok.EqualsAndHashCode;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -24,16 +23,12 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import lombok.ToString;
 
 @Entity
 @Table(
     name = "follows",
     uniqueConstraints = {
-        @UniqueConstraint(
-            name = "uk_follower_following",
-            columnNames = {"follower_id", "following_id"}
-        )
+        @UniqueConstraint(name = "uk_follower_following", columnNames = {"follower_id", "following_id"})
     },
     indexes = {
         @Index(name = "idx_follower", columnList = "follower_id"),
@@ -45,8 +40,6 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@ToString(exclude = {"follower", "following"})
 public class Follow implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -59,7 +52,6 @@ public class Follow implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @EqualsAndHashCode.Include
     @Column(name = "follow_id")
     private Long id;
 

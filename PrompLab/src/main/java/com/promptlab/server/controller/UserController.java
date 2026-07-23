@@ -1,38 +1,35 @@
 package com.promptlab.server.controller;
 
-import com.promptlab.server.dto.UserProfileResponse;
-import com.promptlab.server.service.UserService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import com.promptlab.server.entity.User;
+import com.promptlab.server.service.FollowService;
 
 @RestController
+@CrossOrigin(origins = "http://localhost:5173")
 @RequestMapping("/api/users")
 public class UserController {
 
-    private final UserService userService;
+    private final FollowService followService;
 
-    // Manual constructor injection
-    public UserController(UserService userService) {
-        this.userService = userService;
+    public UserController(FollowService followService) {
+        this.followService = followService;
     }
 
-    // Endpoint to view a specific user's public profile
-    @GetMapping("/{username}")
-    public ResponseEntity<UserProfileResponse> getUserProfile(@PathVariable String username) {
-        return ResponseEntity.ok(userService.getUserProfile(username));
-    }
-
-    // Endpoint to follow or unfollow a user
-    @PostMapping("/{username}/follow")
-    public ResponseEntity<Void> followUser(@PathVariable String username) {
-        userService.followUser(username);
+    @PostMapping("/{userId}/follow")
+    public ResponseEntity<Void> followUser(
+            @PathVariable Long userId,
+            @AuthenticationPrincipal User user) {
+        followService.followUser(user, userId);
         return ResponseEntity.ok().build();
     }
-    
-    // Endpoint to report a user to the system admin
-    @PostMapping("/{username}/report")
-    public ResponseEntity<Void> reportUser(@PathVariable String username, @RequestBody String reason) {
-        userService.reportUser(username, reason);
+
+    @DeleteMapping("/{userId}/unfollow")
+    public ResponseEntity<Void> unfollowUser(
+            @PathVariable Long userId,
+            @AuthenticationPrincipal User user) {
+        followService.unfollowUser(user, userId);
         return ResponseEntity.ok().build();
     }
 }

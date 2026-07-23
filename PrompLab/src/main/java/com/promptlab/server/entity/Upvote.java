@@ -7,7 +7,6 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import lombok.EqualsAndHashCode;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -22,16 +21,12 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import lombok.ToString;
 
 @Entity
 @Table(
     name = "upvotes",
     uniqueConstraints = {
-        @UniqueConstraint(
-            name = "uk_user_post_upvote",
-            columnNames = {"user_id", "post_id"}
-        )
+        @UniqueConstraint(name = "uk_user_post_upvote", columnNames = {"user_id", "post_id"})
     },
     indexes = {
         @Index(name = "idx_upvote_user", columnList = "user_id"),
@@ -43,15 +38,12 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@ToString(exclude = {"user", "post"})
 public class Upvote implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @EqualsAndHashCode.Include
     @Column(name = "upvote_id")
     private Long id;
 

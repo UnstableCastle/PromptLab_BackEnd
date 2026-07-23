@@ -1,13 +1,12 @@
 package com.promptlab.server.service;
 
-import com.promptlab.server.dto.AuthenticationRequest;
-import com.promptlab.server.dto.AuthenticationResponse;
-import com.promptlab.server.dto.RegisterRequest;
+import com.promptlab.server.dto.*;
 
 public interface AuthService {
-
-    AuthenticationResponse register(RegisterRequest request);
-
+    void register(RegisterRequest request);
     AuthenticationResponse authenticate(AuthenticationRequest request);
-
+    AuthenticationResponse refreshToken(RefreshTokenRequest request);
+    void logout(RefreshTokenRequest request);
+    void sendPasswordResetOtp(String email);
+    void verifyOtpAndResetPassword(String email, String otp, String newPassword);
 }
