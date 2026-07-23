@@ -35,6 +35,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain) throws ServletException, IOException {
 
+        // BYPASS JWT FILTER ENTIRELY FOR PUBLIC AUTH ENDPOINTS
+        String path = request.getRequestURI();
+        if (path.startsWith("/api/auth/")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String authHeader = request.getHeader(HEADER);
 
         if (authHeader == null || !authHeader.startsWith(PREFIX)) {
