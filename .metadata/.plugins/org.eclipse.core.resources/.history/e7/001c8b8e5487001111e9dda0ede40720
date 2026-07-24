@@ -1,0 +1,37 @@
+@Service
+@RequiredArgsConstructor
+public class FollowService {
+
+    private final UserRepository userRepository;
+    private final FollowRepository followRepository;
+
+    @Transactional
+    public void followUser(Long followerId, Long targetUserId) {
+        if (followerId.equals(targetUserId)) {
+            throw new IllegalArgumentException("You cannot follow yourself.");
+        }
+
+        User follower = userRepository.findById(followerId)
+            .orElseThrow(() -> new RuntimeException("Follower not found"));
+        User target = userRepository.findById(targetUserId)
+            .orElseThrow(() -> new RuntimeException("Target user not found"));
+
+        // Check if follow already exists to prevent duplicates
+        if (!followRepository.existsByFollowerAndFollowing(follower, target)) {
+            Follow follow = new Follow();
+            follow.setFollower(follower);
+            follow.setFollowing(target);
+            followRepository.save(follow);
+        }
+    }
+
+    @Transactional
+    public void unfollowUser(Long followerId, Long targetUserId) {
+        User follower = userRepository.findById(followerId)
+            .orElseThrow(() -> new RuntimeException("Follower not found"));
+        User target = userRepository.findById(targetUserId)
+            .orElseThrow(() -> new RuntimeException("Target user not found"));
+
+        followRepository.deleteByFollowerAndFollowing(follower, target);
+    }
+}

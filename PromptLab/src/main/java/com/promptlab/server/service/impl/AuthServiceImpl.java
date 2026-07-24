@@ -129,7 +129,7 @@ public class AuthServiceImpl implements AuthService {
                 .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
 
         passwordResetTokenRepository.deleteByUser(user);
-        passwordResetTokenRepository.flush(); // Forces delete execution before inserting the new OTP
+        passwordResetTokenRepository.flush(); 
 
         String otp = String.format("%06d", new java.util.Random().nextInt(999999));
 
@@ -167,5 +167,36 @@ public class AuthServiceImpl implements AuthService {
         userRepository.save(user);
 
         passwordResetTokenRepository.delete(resetToken);
+    }
+
+    @Override
+    public void changePassword(String identifier, String oldPassword, String newPassword) {
+        User user = userRepository.findByEmail(identifier) 
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (!passwordEncoder.matches(oldPassword, user.getPasswordHash())) {
+            throw new IllegalArgumentException("Incorrect current password.");
+        }
+
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+    }
+
+    @Override
+    public void verifyAccount(String email, String otp) {
+        // TODO: Implement your account verification logic here
+    }
+
+    @Override
+    public AccountDetailsResponse getAccountDetails(String identifier) {
+        User user = userRepository.findByEmail(identifier)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return new AccountDetailsResponse(
+            user.getId(),
+            user.getUsername(),
+            user.getEmail(),
+            user.getRole().name()
+        );
     }
 }

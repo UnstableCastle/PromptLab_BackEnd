@@ -18,9 +18,11 @@ public class CustomUserDetailsService implements UserDetailsService {
     }
 
     @Override
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + email));
+    public UserDetails loadUserByUsername(String identifier) throws UsernameNotFoundException {
+        // The identifier can be either a username (from JWT) or an email (from Login request)
+        User user = userRepository.findByUsername(identifier)
+                .orElseGet(() -> userRepository.findByEmail(identifier)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with identifier: " + identifier)));
 
         if (user.isSuspended()) {
             throw new DisabledException("Your account has been suspended.");

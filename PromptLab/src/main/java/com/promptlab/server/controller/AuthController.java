@@ -1,9 +1,14 @@
 package com.promptlab.server.controller;
 
+import java.security.Principal;
+
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.promptlab.server.dto.*;
+import com.promptlab.server.payload.ApiResponse;
 import com.promptlab.server.service.AuthService;
+
 @CrossOrigin(origins = "http://localhost:5173")
 @RestController
 @RequestMapping("/api/auth")
@@ -45,8 +50,30 @@ public class AuthController {
 
     @PostMapping("/reset-password")
     public ResponseEntity<String> resetPassword(@RequestBody ResetPasswordRequest request) {
-        // Assuming ResetPasswordRequest contains fields: email, otp, newPassword
         authService.verifyOtpAndResetPassword(request.email(), request.otp(), request.newPassword());
         return ResponseEntity.ok("Password has been successfully reset.");
+    }
+    
+    //-------------- 
+    
+    @PostMapping("/verify-account")
+    public ResponseEntity<ApiResponse<Void>> verifyAccount(@Valid @RequestBody VerificationRequest request) {
+        authService.verifyAccount(request.email(), request.otp());
+        return ResponseEntity.ok(new ApiResponse<>(true, "Account verified successfully. You may now log in."));
+    }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<ApiResponse<Void>> changePassword(
+            @Valid @RequestBody ChangePasswordRequest request, 
+            Principal principal) { 
+        
+        authService.changePassword(principal.getName(), request.oldPassword(), request.newPassword());
+        return ResponseEntity.ok(new ApiResponse<>(true, "Password updated successfully."));
+    }
+    
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<AccountDetailsResponse>> getCurrentUser(Principal principal) {
+        AccountDetailsResponse user = authService.getAccountDetails(principal.getName());
+        return ResponseEntity.ok(new ApiResponse<>(true, "Account details fetched successfully", user));
     }
 }

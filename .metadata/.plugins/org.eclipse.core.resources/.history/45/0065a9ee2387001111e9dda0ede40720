@@ -1,0 +1,5 @@
+package com.promptlab.server.payload;
+
+public class ApiResponse {
+
+}
