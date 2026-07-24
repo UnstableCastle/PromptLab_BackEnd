@@ -9,6 +9,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.promptlab.server.dto.UserProfileResponse;
 import com.promptlab.server.dto.UserUpdateRequest;
 import com.promptlab.server.entity.User;
+import com.promptlab.server.repository.FollowRepository;
+import com.promptlab.server.repository.PostRepository;
 import com.promptlab.server.repository.UserRepository;
 import com.promptlab.server.service.UserService;
 
@@ -17,10 +19,14 @@ import com.promptlab.server.service.UserService;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
-    // TODO: Inject FollowRepository and PostRepository here later
+    private final FollowRepository followRepository;
+    private final PostRepository postRepository;
 
-    public UserServiceImpl(UserRepository userRepository) {
+    // Injected all required repositories
+    public UserServiceImpl(UserRepository userRepository, FollowRepository followRepository, PostRepository postRepository) {
         this.userRepository = userRepository;
+        this.followRepository = followRepository;
+        this.postRepository = postRepository;
     }
 
     @Override
@@ -68,26 +74,35 @@ public class UserServiceImpl implements UserService {
         userRepository.deleteById(id);
     }
 
+    @Override
+    public User findByUsername(String currentUsername) {
+        // Implemented the auto-generated stub
+        return userRepository.findByUsername(currentUsername)
+                .orElseThrow(() -> new RuntimeException("User not found: " + currentUsername));
+    }
+
     // --- HELPER METHOD TO MAP TO YOUR EXACT RECORD ---
     private UserProfileResponse mapToUserProfileResponse(User targetUser, String currentUsername) {
         
         // 1. Resolve if the current logged-in user follows this target user
         boolean followedByCurrentUser = false;
         if (currentUsername != null && !currentUsername.equals(targetUser.getUsername())) {
-            // TODO: followedByCurrentUser = followRepository.existsByFollowerUsernameAndFollowingId(currentUsername, targetUser.getId());
+            User currentUser = findByUsername(currentUsername);
+            // Reusing the existsByFollowerAndFollowing method from your FollowService setup
+            followedByCurrentUser = followRepository.existsByFollowerAndFollowing(currentUser, targetUser);
         }
 
-        // 2. Fetch aggregate statistics
-        long followerCount = 0L; // TODO: followRepository.countByFollowingId(targetUser.getId());
-        long followingCount = 0L; // TODO: followRepository.countByFollowerId(targetUser.getId());
-        long postCount = 0L;      // TODO: postRepository.countByUserId(targetUser.getId());
+        // 2. Fetch aggregate statistics using standard Spring Data JPA derived queries
+        long followerCount = followRepository.countByFollowing(targetUser);
+        long followingCount = followRepository.countByFollower(targetUser);
+        long postCount = postRepository.countByUser(targetUser); 
 
         // 3. Construct and return your specific Record
         return new UserProfileResponse(
             targetUser.getUsername(),
             targetUser.getBio(),
             targetUser.getProfilePicture(),
-            targetUser.isPrivate(), // Ensure your User entity has an `isPrivate` boolean field
+            targetUser.isPrivate(),
             followerCount,
             followingCount,
             postCount,

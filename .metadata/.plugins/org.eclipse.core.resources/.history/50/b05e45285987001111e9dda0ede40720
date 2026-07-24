@@ -1,0 +1,36 @@
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.promptlab.server.entity.Post;
+import com.promptlab.server.entity.Report;
+import com.promptlab.server.entity.User;
+import com.promptlab.server.repository.PostRepository;
+import com.promptlab.server.repository.ReportRepository;
+import com.promptlab.server.repository.UserRepository;
+
+import lombok.RequiredArgsConstructor;
+
+@Service
+@RequiredArgsConstructor
+public class ReportService {
+
+    private final ReportRepository reportRepository;
+    private final UserRepository userRepository;
+    private final PostRepository postRepository;
+
+    @Transactional
+    public void reportPost(Long reporterId, Long postId, String reason) {
+        User reporter = userRepository.findById(reporterId)
+            .orElseThrow(() -> new RuntimeException("User not found"));
+        Post post = postRepository.findById(postId)
+            .orElseThrow(() -> new RuntimeException("Post not found"));
+
+        Report report = new Report();
+        report.setReporter(reporter);
+        report.setPost(post);
+        report.setReason(reason);
+        // report.setStatus("PENDING"); // Optional: if you track report resolution
+
+        reportRepository.save(report);
+    }
+}
