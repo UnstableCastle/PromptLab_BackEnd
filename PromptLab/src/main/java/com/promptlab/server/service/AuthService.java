@@ -4,9 +4,20 @@ import com.promptlab.server.dto.*;
 
 public interface AuthService {
     void register(RegisterRequest request);
+
     AuthenticationResponse authenticate(AuthenticationRequest request);
+
     AuthenticationResponse refreshToken(RefreshTokenRequest request);
+
     void logout(RefreshTokenRequest request);
+
     void sendPasswordResetOtp(String email);
+
     void verifyOtpAndResetPassword(String email, String otp, String newPassword);
+
+    void changePassword(String username, String oldPassword, String newPassword);
+    
+    void verifyAccount(String email, String otp);
+
+    AccountDetailsResponse getAccountDetails(String identifier);
 }

@@ -107,4 +107,27 @@ public class PostServiceImpl implements PostService {
 
         postRepository.delete(post);
     }
+
+    @Override
+    public PostResponse getPostById(Long postId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("Post not found with id: " + postId));
+        
+        // Convert entity to DTO (using your existing mapper or builder)
+        return mapToPostResponse(post);
+    }
+
+    private PostResponse mapToPostResponse(Post post) {
+        return new PostResponse(
+            post.getId(),
+            post.getTitle(),
+            post.getPromptText(),
+            post.getModelInfo(),
+            post.getAttachmentUrl(),
+            post.getUpvoteCount(),
+            post.isExplore(),
+            post.getUser() != null ? post.getUser().getUsername() : null,
+            post.getCreatedAt()
+        );
+    }
 }

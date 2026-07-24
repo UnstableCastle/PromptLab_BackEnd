@@ -51,18 +51,11 @@ public class Report implements Serializable {
     private static final long serialVersionUID = 1L;
 
     public enum ReportReason {
-        SPAM,
-        OFFENSIVE,
-        NSFW,
-        COPYRIGHT,
-        MISLEADING,
-        OTHER
+        SPAM, OFFENSIVE, NSFW, COPYRIGHT, MISLEADING, OTHER
     }
 
     public enum ReportStatus {
-        OPEN,
-        RESOLVED,
-        DISMISSED
+        OPEN, RESOLVED, DISMISSED
     }
 
     @Id
@@ -70,10 +63,12 @@ public class Report implements Serializable {
     @Column(name = "report_id")
     private Long id;
 
+    // This is correct: The Report belongs to a User (reporter)
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User reporter;
 
+    // This is correct: The Report belongs to a Post
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "post_id", nullable = false)
     private Post post;

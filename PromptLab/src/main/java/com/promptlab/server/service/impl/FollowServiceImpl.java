@@ -8,6 +8,7 @@ import com.promptlab.server.service.FollowService;
 
 @Service
 @Transactional
+
 public class FollowServiceImpl implements FollowService {
 
     private final FollowRepository followRepository;

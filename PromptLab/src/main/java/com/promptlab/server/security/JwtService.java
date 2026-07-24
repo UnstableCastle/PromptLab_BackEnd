@@ -27,7 +27,7 @@ public class JwtService {
     private String secret;
 
     @Value("${jwt.expiration}")
-    private long jwtExpiration; // Expiration specifically for Access Tokens
+    private long jwtExpiration;
 
     private SecretKey signingKey;
     private JwtParser jwtParser;
@@ -37,12 +37,13 @@ public class JwtService {
         if (secret == null || secret.isBlank()) {
             throw new IllegalStateException("JWT secret is missing.");
         }
+        // Requires a Base64 encoded string (at least 256-bit) in application.properties
         signingKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret));
         jwtParser = Jwts.parserBuilder().setSigningKey(signingKey).build();
     }
 
     // ==========================
-    // Access Token Generation (With Expiration)
+    // Access Token Generation
     // ==========================
 
     public String generateAccessToken(UserDetails userDetails) {
@@ -55,17 +56,16 @@ public class JwtService {
                 .setClaims(extraClaims)
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date(now))
-                .setExpiration(new Date(now + jwtExpiration)) // Has expiration time
+                .setExpiration(new Date(now + jwtExpiration))
                 .signWith(signingKey)
                 .compact();
     }
 
     // ==========================
-    // Refresh Token Generation (No JWT Expiration / Opaque Token)
+    // Refresh Token Generation
     // ==========================
 
     public String generateRefreshToken() {
-        // Generates a secure random opaque token string to be stored and tracked in your database
         return UUID.randomUUID().toString() + "-" + UUID.randomUUID().toString();
     }
 
@@ -82,7 +82,7 @@ public class JwtService {
     }
 
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
-        Claims claims = extractAllClaims(token);
+        final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
     }
 
@@ -99,8 +99,8 @@ public class JwtService {
     // ==========================
 
     public boolean isTokenValid(String token, UserDetails userDetails) {
-        String username = extractUsername(token);
-        return username.equals(userDetails.getUsername())
+        final String username = extractUsername(token);
+        return (username.equals(userDetails.getUsername()))
                 && userDetails.isEnabled()
                 && userDetails.isAccountNonLocked()
                 && userDetails.isAccountNonExpired()
