@@ -1,9 +1,7 @@
 package com.promptlab.server.service;
 
-import com.promptlab.server.entity.Report.ReportReason;
+import com.promptlab.server.entity.User;
 
 public interface ReportService {
-
-    void reportPost(Long postId, ReportReason reason);
-    
+    void reportPost(User reporter, Long postId, String reasonString);
 }

@@ -102,4 +102,9 @@ public class Report implements Serializable {
     public int hashCode() {
         return getClass().hashCode();
     }
+
+	public void setReason(String reason2) {
+		// TODO Auto-generated method stub
+		
+	}
 }
