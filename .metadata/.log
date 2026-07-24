@@ -4603,3 +4603,6 @@ java.lang.IllegalStateException: must specify at least one linked position
 
 !ENTRY org.eclipse.m2e.logback.appender 2 0 2026-07-24 17:44:17.514
 !MESSAGE Plugin is modifying testCompileSourceRoots through add(), which will not work in Maven 4.0.0. Use MavenProject.addTestCompileSourceRoot()/removeTestCompileSourceRoot() methods instead. If using a plugin, please upgrade to the latest version or report the issue to the plugin maintainer. To disable these warnings, set -Dmaven.project.sourceRoots.warningsDisabled=true on the command line, in the .mvn/maven.config file, or in project POM properties.
+
+!ENTRY org.springframework.tooling.boot.ls 1 0 2026-07-24 17:50:10.937
+!MESSAGE DelegatingStreamConnectionProvider - Stopping Boot LS
