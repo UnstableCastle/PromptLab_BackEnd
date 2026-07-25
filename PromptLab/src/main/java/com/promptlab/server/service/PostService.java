@@ -9,5 +9,8 @@ public interface PostService {
     Page<PostResponse> getAllPosts(int page, int size);
     Object updatePost(Long postId, User user, PostRequest request);
     void deletePost(Long postId, User user);
-	Object getPostById(Long postId);
+    Object getPostById(Long postId);
+    
+    // Added search method signature
+    Page<PostResponse> searchPosts(String keyword, int page, int size);
 }

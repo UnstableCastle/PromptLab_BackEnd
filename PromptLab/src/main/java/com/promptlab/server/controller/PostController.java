@@ -40,7 +40,16 @@ public class PostController {
             @RequestParam(defaultValue = "10") int size) {
         return ResponseEntity.ok(postService.getAllPosts(page, size));
     }
-@Transactional
+
+    @GetMapping("/search")
+    public ResponseEntity<Page<PostResponse>> searchPosts(
+            @RequestParam("keyword") String keyword,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(postService.searchPosts(keyword, page, size));
+    }
+
+    @Transactional
     @GetMapping("/{postId}")
     public ResponseEntity<Object> getPostById(@PathVariable Long postId) {
         return ResponseEntity.ok(postService.getPostById(postId));

@@ -33,33 +33,19 @@ public class PostServiceImpl implements PostService {
 
         Post savedPost = postRepository.save(post);
 
-        return new PostResponse(
-                savedPost.getId(),
-                savedPost.getTitle(),
-                savedPost.getPromptText(),
-                savedPost.getModelInfo(),
-                savedPost.getAttachmentUrl(),
-                savedPost.getUpvoteCount(),
-                savedPost.isExplore(),
-                user.getUsername(),
-                savedPost.getCreatedAt()
-        );
+        return mapToPostResponse(savedPost);
     }
 
     @Override
     public Page<PostResponse> getAllPosts(int page, int size) {
         return postRepository.findAllByOrderByCreatedAtDesc(PageRequest.of(page, size))
-                .map(post -> new PostResponse(
-                        post.getId(),
-                        post.getTitle(),
-                        post.getPromptText(),
-                        post.getModelInfo(),
-                        post.getAttachmentUrl(),
-                        post.getUpvoteCount(),
-                        post.isExplore(),
-                        post.getUser().getUsername(),
-                        post.getCreatedAt()
-                ));
+                .map(this::mapToPostResponse);
+    }
+
+    @Override
+    public Page<PostResponse> searchPosts(String keyword, int page, int size) {
+        return postRepository.searchPosts(keyword, PageRequest.of(page, size))
+                .map(this::mapToPostResponse);
     }
 
     @Override
@@ -81,17 +67,7 @@ public class PostServiceImpl implements PostService {
 
         Post updatedPost = postRepository.save(post);
 
-        return new PostResponse(
-                updatedPost.getId(),
-                updatedPost.getTitle(),
-                updatedPost.getPromptText(),
-                updatedPost.getModelInfo(),
-                updatedPost.getAttachmentUrl(),
-                updatedPost.getUpvoteCount(),
-                updatedPost.isExplore(),
-                user.getUsername(),
-                updatedPost.getCreatedAt()
-        );
+        return mapToPostResponse(updatedPost);
     }
 
     @Override
@@ -113,7 +89,6 @@ public class PostServiceImpl implements PostService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found with id: " + postId));
         
-        // Convert entity to DTO (using your existing mapper or builder)
         return mapToPostResponse(post);
     }
 
