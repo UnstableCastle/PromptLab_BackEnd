@@ -1,0 +1,38 @@
+package com.promptlab.server.controller;
+
+import com.promptlab.server.entity.User;
+import com.promptlab.server.payload.ApiResponse;
+import com.promptlab.server.service.FollowService;
+import com.promptlab.server.service.UserService; 
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/users")
+@RequiredArgsConstructor
+public class FollowController {
+
+    private final FollowService followService;
+    private final UserService userService; 
+
+    @PostMapping("/{userId}/follow")
+    public ResponseEntity<ApiResponse<Void>> followUser(
+            @PathVariable Long userId,
+            @AuthenticationPrincipal User user) {
+        
+        followService.followUser(user, userId);
+        return ResponseEntity.ok(new ApiResponse<>(true, "User followed successfully", null));
+    }
+
+    @DeleteMapping("/{userId}/unfollow")
+    public ResponseEntity<ApiResponse<Void>> unfollowUser(
+            @PathVariable Long userId,
+            @AuthenticationPrincipal User user) {
+        
+        followService.unfollowUser(user, userId);
+        return ResponseEntity.ok(new ApiResponse<>(true, "User unfollowed successfully", null));
+    }
+}

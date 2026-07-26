@@ -1,5 +1,6 @@
 package com.promptlab.server.config;
 
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -18,7 +19,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
+import jakarta.servlet.DispatcherType;
 import com.promptlab.server.security.JwtAuthenticationFilter;
 
 import java.util.Arrays;
@@ -41,8 +42,10 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
-            .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Added global CORS configuration
+            .cors(cors -> cors.configurationSource(corsConfigurationSource())) 
             .authorizeHttpRequests(auth -> auth
+                // Explicitly permit internal Spring Boot error dispatches
+                .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll() 
                 .requestMatchers("/api/auth/**").permitAll()
                 .anyRequest().authenticated()
             )
