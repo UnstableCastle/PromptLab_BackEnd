@@ -1,8 +1,0 @@
-package com.promptlab.server.dto;
-
-public record AuthenticationResponse( 
-    
-  String username,
-  String password
-) {}
-		
