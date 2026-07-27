@@ -143,6 +143,7 @@ public class PostServiceImpl implements PostService {
     }
 
 	@Override
+	@Transactional
 	public List<PostResponse> getPostsByUserId(Long userId) {
 		// TODO Auto-generated method stub
 		return postRepository.findByUserId(userId).stream()
