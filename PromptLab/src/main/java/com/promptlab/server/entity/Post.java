@@ -59,15 +59,15 @@ public class Post implements Serializable {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @NotBlank
+    
     @Size(max = 150)
     @Column(nullable = false, length = 150)
-    private String title;
+    private String title= "Untitled Draft";
 
-    @NotBlank
+  
     @Lob
     @Column(name = "prompt_text", nullable = false)
-    private String promptText;
+    private String promptText = "";
 
     @Size(max = 100)
     @Column(name = "model_info", length = 100)
@@ -89,6 +89,11 @@ public class Post implements Serializable {
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+    
+    
+    @Builder.Default
+    @Column(name = "status", nullable = false)
+    private String status = "DRAFT";
 
     // --- ADDED RELATIONSHIP FOR CASCADING DELETES ---
     
@@ -100,7 +105,12 @@ public class Post implements Serializable {
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Report> postReports = new ArrayList<>();
     
-    
+ // Inside your Post.java entity
+
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
+
+    // Make sure to add your getter and setter for userId!
     
     // -------------------------------------------------
 }

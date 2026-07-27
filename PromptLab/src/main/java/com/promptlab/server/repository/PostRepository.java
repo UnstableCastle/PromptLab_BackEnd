@@ -2,6 +2,9 @@ package com.promptlab.server.repository;
 
 import com.promptlab.server.entity.Post;
 import com.promptlab.server.entity.User;
+
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -19,6 +22,8 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     Page<Post> findByUserOrderByCreatedAtDesc(User user, Pageable pageable);
 
     long countByUser(User user);
+    
+    List<Post> findByUserId(Long userId);
 
     @EntityGraph(attributePaths = {"user"})
     @Query("SELECT p FROM Post p WHERE LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(CAST(p.promptText AS string)) LIKE LOWER(CONCAT('%', :keyword, '%')) ORDER BY p.createdAt DESC")

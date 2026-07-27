@@ -19,6 +19,8 @@ public record PostResponse(
     boolean isExplore,
 
     String authorUsername,
+    
+    String status, 
 
     LocalDateTime createdAt
 
