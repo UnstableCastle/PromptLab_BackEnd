@@ -21,37 +21,39 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<String> register(@RequestBody RegisterRequest request) {
+    public ResponseEntity<ApiResponse<Void>> register(@Valid @RequestBody RegisterRequest request) {
         authService.register(request);
-        return ResponseEntity.ok("User registered successfully");
+        return ResponseEntity.ok(new ApiResponse<>(true, "User registered successfully"));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthenticationResponse> authenticate(@RequestBody AuthenticationRequest request) {
-        return ResponseEntity.ok(authService.authenticate(request));
+    public ResponseEntity<ApiResponse<AuthenticationResponse>> authenticate(@Valid @RequestBody AuthenticationRequest request) {
+        AuthenticationResponse response = authService.authenticate(request);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Login successful", response));
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<AuthenticationResponse> refreshToken(@RequestBody RefreshTokenRequest request) {
-        return ResponseEntity.ok(authService.refreshToken(request));
+    public ResponseEntity<ApiResponse<AuthenticationResponse>> refreshToken(@Valid @RequestBody RefreshTokenRequest request) {
+        AuthenticationResponse response = authService.refreshToken(request);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Token refreshed successfully", response));
     }
     
     @PostMapping("/logout")
-    public ResponseEntity<String> logout(@RequestBody RefreshTokenRequest request) {
+    public ResponseEntity<ApiResponse<Void>> logout(@RequestBody RefreshTokenRequest request) {
         authService.logout(request);
-        return ResponseEntity.ok("Logged out successfully");
+        return ResponseEntity.ok(new ApiResponse<>(true, "Logged out successfully"));
     }
     
     @PostMapping("/forgot-password")
-    public ResponseEntity<String> forgotPassword(@RequestParam String email) {
+    public ResponseEntity<ApiResponse<Void>> forgotPassword(@RequestParam String email) {
         authService.sendPasswordResetOtp(email);
-        return ResponseEntity.ok("OTP sent to your email address.");
+        return ResponseEntity.ok(new ApiResponse<>(true, "OTP sent to your email address."));
     }
 
     @PostMapping("/reset-password")
-    public ResponseEntity<String> resetPassword(@RequestBody ResetPasswordRequest request) {
+    public ResponseEntity<ApiResponse<Void>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
         authService.verifyOtpAndResetPassword(request.email(), request.otp(), request.newPassword());
-        return ResponseEntity.ok("Password has been successfully reset.");
+        return ResponseEntity.ok(new ApiResponse<>(true, "Password has been successfully reset."));
     }
     
     //-------------- 

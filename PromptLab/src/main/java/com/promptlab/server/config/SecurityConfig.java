@@ -38,17 +38,31 @@ public class SecurityConfig {
         this.userDetailsService = userDetailsService;
     }
 
+    
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
             .cors(cors -> cors.configurationSource(corsConfigurationSource())) 
             .authorizeHttpRequests(auth -> auth
-                // Explicitly permit internal Spring Boot error dispatches
                 .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll() 
                 .requestMatchers("/api/auth/**").permitAll()
                 .anyRequest().authenticated()
             )
+            // ADD THIS EXCEPTION HANDLING BLOCK
+            .exceptionHandling(exceptions -> exceptions
+                .authenticationEntryPoint((request, response, authException) -> {
+                    response.setContentType("application/json");
+                    response.setStatus(jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED);
+                    response.getWriter().write("{\"success\":false,\"message\":\"Invalid credentials or missing token\",\"data\":null}");
+                })
+                .accessDeniedHandler((request, response, accessDeniedException) -> {
+                    response.setContentType("application/json");
+                    response.setStatus(jakarta.servlet.http.HttpServletResponse.SC_FORBIDDEN);
+                    response.getWriter().write("{\"success\":false,\"message\":\"You do not have permission to access this resource\",\"data\":null}");
+                })
+            )
+            // END OF EXCEPTION HANDLING BLOCK
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authenticationProvider(authenticationProvider())
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
