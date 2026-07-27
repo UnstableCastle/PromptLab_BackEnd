@@ -105,12 +105,6 @@ public class Post implements Serializable {
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Report> postReports = new ArrayList<>();
     
- // Inside your Post.java entity
-
-    @Column(name = "user_id", nullable = false)
-    private Long userId;
-
-    // Make sure to add your getter and setter for userId!
-    
+ 
     // -------------------------------------------------
 }
