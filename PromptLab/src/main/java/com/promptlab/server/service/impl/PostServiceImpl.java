@@ -4,6 +4,10 @@ import com.promptlab.server.dto.*;
 import com.promptlab.server.entity.*;
 import com.promptlab.server.repository.*;
 import com.promptlab.server.service.PostService;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -18,23 +22,54 @@ public class PostServiceImpl implements PostService {
         this.postRepository = postRepository;
     }
 
+    // --- NEW DRAFT-FIRST METHODS ---
+
     @Override
     @Transactional
-    public PostResponse createPost(User user, PostRequest request) {
-        Post post = Post.builder()
-                .title(request.title())
-                .promptText(request.promptText())
-                .modelInfo(request.modelInfo())
-                .attachmentUrl(request.attachmentUrl())
+    public PostResponse createDraftPost(User user) {
+        // Initialize with dummy data to satisfy @NotBlank database constraints
+        Post draft = Post.builder()
+                .title("Untitled Draft") 
+                .promptText("Draft content...") 
+                .modelInfo("")
+                .attachmentUrl(null)
                 .user(user)
                 .upvoteCount(0)
                 .isExplore(false)
                 .build();
 
-        Post savedPost = postRepository.save(post);
+        Post savedDraft = postRepository.save(draft);
 
-        return mapToPostResponse(savedPost);
+        return mapToPostResponse(savedDraft);
     }
+
+    @Override
+    @Transactional
+    public Object finalizeDraft(Long postId, User user, PostRequest request, String attachmentUrl) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("Post not found with id: " + postId));
+
+        // Ensure only the owner can finalize their draft
+        if (!post.getUser().getId().equals(user.getId())) {
+            throw new RuntimeException("Unauthorized to update this post");
+        }
+
+        // Apply the actual user data to the draft
+        post.setTitle(request.title());
+        post.setPromptText(request.promptText());
+        post.setModelInfo(request.modelInfo());
+        
+        // Only update the attachment URL if a new file was uploaded during submission
+        if (attachmentUrl != null) {
+            post.setAttachmentUrl(attachmentUrl);
+        }
+
+        Post updatedPost = postRepository.save(post);
+
+        return mapToPostResponse(updatedPost);
+    }
+
+    // --- EXISTING METHODS ---
 
     @Override
     public Page<PostResponse> getAllPosts(int page, int size) {
@@ -101,8 +136,17 @@ public class PostServiceImpl implements PostService {
             post.getAttachmentUrl(),
             post.getUpvoteCount(),
             post.isExplore(),
+            post.getStatus(),
             post.getUser() != null ? post.getUser().getUsername() : null,
             post.getCreatedAt()
         );
     }
+
+	@Override
+	public List<PostResponse> getPostsByUserId(Long userId) {
+		// TODO Auto-generated method stub
+		return postRepository.findByUserId(userId).stream()
+                .map(this::mapToPostResponse)
+                .collect(Collectors.toList());
+	}
 }

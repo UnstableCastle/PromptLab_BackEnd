@@ -1,7 +1,10 @@
 package com.promptlab.server.controller;
 
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,14 +30,39 @@ public class PostController {
         this.fileService = fileService;
     }
 
-    @PostMapping
-    public ResponseEntity<ApiResponse<PostResponse>> createPost(
-            @AuthenticationPrincipal User user,
-            @RequestBody PostRequest request) {
-        PostResponse response = postService.createPost(user, request);
+    // --- NEW DRAFT-FIRST WORKFLOW ENDPOINTS ---
+
+    // 1. BACKGROUND INIT: Creates the blank draft instantly
+    @PostMapping("/init")
+    public ResponseEntity<ApiResponse<PostResponse>> initializeDraft(@AuthenticationPrincipal User user) {
+        // Requires a new method in PostService to save a draft state
+        PostResponse draftPost = postService.createDraftPost(user); 
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new ApiResponse<>(true, "Post created successfully", response));
+                .body(new ApiResponse<>(true, "Draft initialized", draftPost));
     }
+
+    // 2. SUBMIT: Accepts the JSON text data and the MultipartFile in one single request
+    @PutMapping(value = "/{postId}/submit", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<Object>> submitPost(
+            @PathVariable Long postId,
+            @AuthenticationPrincipal User user,
+            @RequestPart("postDetails") PostRequest request, 
+            @RequestPart(value = "file", required = false) MultipartFile file) {
+
+        String attachmentUrl = null;
+        
+        // Handle the file upload if the user attached one
+        if (file != null && !file.isEmpty()) {
+            attachmentUrl = fileService.uploadPostFile(postId, user, file);
+        }
+
+        // Requires a new method in PostService to apply the request data, set the URL, and change status to PUBLISHED
+        Object finalizedPost = postService.finalizeDraft(postId, user, request, attachmentUrl);
+
+        return ResponseEntity.ok(new ApiResponse<>(true, "Post published successfully", finalizedPost));
+    }
+
+    // --- EXISTING ENDPOINTS ---
 
     @GetMapping
     public ResponseEntity<ApiResponse<Page<PostResponse>>> getAllPosts(
@@ -84,13 +112,13 @@ public class PostController {
         upvoteService.toggleUpvote(postId, user);
         return ResponseEntity.ok(new ApiResponse<>(true, "Upvote toggled successfully", null));
     }
+ // Add this new endpoint inside your PostController class, perhaps under the existing GET methods
 
-    @PostMapping("/{postId}/upload")
-    public ResponseEntity<ApiResponse<String>> uploadFile(
-            @PathVariable Long postId,
-            @AuthenticationPrincipal User user,
-            @RequestParam("file") MultipartFile file) {
-        String fileUrl = fileService.uploadPostFile(postId, user, file);
-        return ResponseEntity.ok(new ApiResponse<>(true, "File uploaded successfully", fileUrl));
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<ApiResponse<List<PostResponse>>> getPostsByUserId(@PathVariable Long userId) {
+        List<PostResponse> userPosts = postService.getPostsByUserId(userId);
+        return ResponseEntity.ok(new ApiResponse<>(true, "User posts fetched successfully", userPosts));
     }
+    
+    
 }
