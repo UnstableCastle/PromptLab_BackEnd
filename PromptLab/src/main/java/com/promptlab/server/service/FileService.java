@@ -21,7 +21,7 @@ public class FileService {
     private final Set<String> ALLOWED_CODE_EXTENSIONS = Set.of(
         "java", "js", "ts", "html", "css", "scss", "sql", "json", "xml", "yml", "yaml",
         "py", "c", "cpp", "h", "hpp", "cs", "php", "rb", "go", "rs", "swift", "kt",
-        "sh", "bat", "ps1", "md"
+        "sh", "bat", "ps1", "md","jsx"
     );
 
     public String uploadPostFile(Long postId, User user, MultipartFile file) {
