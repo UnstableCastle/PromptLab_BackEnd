@@ -52,6 +52,15 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Handles standard RuntimeExceptions (like duplicate username/email during registration).
+     */
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<ApiResponse<Void>> handleRuntimeException(RuntimeException ex) {
+        ApiResponse<Void> response = new ApiResponse<>(false, ex.getMessage());
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
      * Fallback handler for any other unexpected exceptions.
      * Note: In a strict production environment, you might want to hide ex.getMessage() from the client 
      * to prevent leaking internal architecture details.

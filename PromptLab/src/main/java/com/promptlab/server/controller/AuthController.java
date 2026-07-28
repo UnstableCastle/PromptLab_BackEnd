@@ -64,14 +64,14 @@ public class AuthController {
         return ResponseEntity.ok(new ApiResponse<>(true, "Account verified successfully. You may now log in."));
     }
 
-    @PostMapping("/change-password")
-    public ResponseEntity<ApiResponse<Void>> changePassword(
-            @Valid @RequestBody ChangePasswordRequest request, 
-            Principal principal) { 
-        
-        authService.changePassword(principal.getName(), request.oldPassword(), request.newPassword());
-        return ResponseEntity.ok(new ApiResponse<>(true, "Password updated successfully."));
-    }
+//    @PostMapping("/change-password")
+//    public ResponseEntity<ApiResponse<Void>> changePassword(
+//            @Valid @RequestBody ChangePasswordRequest request, 
+//            Principal principal) { 
+//        
+//        authService.changePassword(principal.getName(), request.oldPassword(), request.newPassword());
+//        return ResponseEntity.ok(new ApiResponse<>(true, "Password updated successfully."));
+//    }
     
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<AccountDetailsResponse>> getCurrentUser(Principal principal) {
