@@ -5,12 +5,10 @@ import java.util.List;
 
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import com.promptlab.server.dto.UserProfileResponse;
 import com.promptlab.server.dto.UserUpdateRequest;
-import com.promptlab.server.entity.User;
 import com.promptlab.server.payload.ApiResponse;
 import com.promptlab.server.service.UserService;
 import com.promptlab.server.service.FollowService;
@@ -23,15 +21,10 @@ public class UserController {
     private final UserService userService;
     private final FollowService followService;
 
-    // Inject both services into the controller
     public UserController(UserService userService, FollowService followService) {
         this.userService = userService;
         this.followService = followService;
     }
-
-    // ==========================================
-    //        PROFILE & CRUD OPERATIONS
-    // ==========================================
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<UserProfileResponse>>> getAllUsers(Principal principal) {
@@ -69,30 +62,16 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<Void>> deleteUser(@PathVariable Long id) {
-        userService.deleteUser(id);
+    public ResponseEntity<ApiResponse<Void>> deleteUser(
+            @PathVariable Long id, 
+            Principal principal) {
+        
+        String currentUsername = (principal != null) ? principal.getName() : null;
+        if (currentUsername == null) {
+             throw new RuntimeException("Unauthorized: Must be logged in to delete an account.");
+        }
+
+        userService.deleteUser(id, currentUsername);
         return ResponseEntity.ok(new ApiResponse<>(true, "User deleted successfully", null));
     }
-
-    // ==========================================
-    //          SOCIAL / FOLLOW OPERATIONS
-    // ==========================================
-
-//    @PostMapping("/{userId}/follow")
-//    public ResponseEntity<ApiResponse<Void>> followUser(
-//            @PathVariable Long userId,
-//            @AuthenticationPrincipal User user) {
-//        
-//        followService.followUser(user, userId);
-//        return ResponseEntity.ok(new ApiResponse<>(true, "User followed successfully", null));
-//    }
-//
-//    @DeleteMapping("/{userId}/unfollow")
-//    public ResponseEntity<ApiResponse<Void>> unfollowUser(
-//            @PathVariable Long userId,
-//            @AuthenticationPrincipal User user) {
-//        
-//        followService.unfollowUser(user, userId);
-//        return ResponseEntity.ok(new ApiResponse<>(true, "User unfollowed successfully", null));
-//    }
 }

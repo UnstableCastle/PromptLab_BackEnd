@@ -5,9 +5,6 @@ import com.promptlab.server.entity.*;
 import com.promptlab.server.repository.*;
 import com.promptlab.server.service.PostService;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -33,7 +30,7 @@ public class PostServiceImpl implements PostService {
                 .user(user)
                 .upvoteCount(0)
                 .isExplore(false)
-                .status("DRAFT") // Set initial status
+                .status("DRAFT")
                 .build();
 
         Post savedDraft = postRepository.save(draft);
@@ -46,14 +43,18 @@ public class PostServiceImpl implements PostService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found with id: " + postId));
 
-        if (!post.getUser().getId().equals(user.getId())) {
-            throw new RuntimeException("Unauthorized to update this post");
+        boolean isOwner = post.getUser().getId().equals(user.getId());
+        boolean isAdmin = user.getAuthorities().stream()
+                .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
+
+        if (!isOwner && !isAdmin) {
+            throw new RuntimeException("Unauthorized to finalize this draft");
         }
 
         post.setTitle(request.title());
         post.setPromptText(request.promptText());
         post.setModelInfo(request.modelInfo());
-        post.setStatus("PUBLISHED"); // Mark as published
+        post.setStatus("PUBLISHED"); 
         
         if (attachmentUrl != null) {
             post.setAttachmentUrl(attachmentUrl);
@@ -81,7 +82,11 @@ public class PostServiceImpl implements PostService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found with id: " + postId));
 
-        if (!post.getUser().getId().equals(user.getId())) {
+        boolean isOwner = post.getUser().getId().equals(user.getId());
+        boolean isAdmin = user.getAuthorities().stream()
+                .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
+
+        if (!isOwner && !isAdmin) {
             throw new RuntimeException("Unauthorized to update this post");
         }
 
@@ -100,7 +105,11 @@ public class PostServiceImpl implements PostService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found with id: " + postId));
 
-        if (!post.getUser().getId().equals(user.getId())) {
+        boolean isOwner = post.getUser().getId().equals(user.getId());
+        boolean isAdmin = user.getAuthorities().stream()
+                .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
+
+        if (!isOwner && !isAdmin) {
             throw new RuntimeException("Unauthorized to delete this post");
         }
 
@@ -114,8 +123,6 @@ public class PostServiceImpl implements PostService {
         
         return mapToPostResponse(post);
     }
-
-    // --- NEW PAGINATED FEED METHODS ---
 
     @Override
     @Transactional(readOnly = true)

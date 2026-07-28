@@ -28,8 +28,6 @@ public class PostController {
         this.fileService = fileService;
     }
 
-    // --- 1. CREATION & WORKFLOW ENDPOINTS ---
-
     @PostMapping("/init")
     public ResponseEntity<ApiResponse<PostResponse>> initializeDraft(@AuthenticationPrincipal User user) {
         PostResponse draftPost = postService.createDraftPost(user); 
@@ -53,8 +51,6 @@ public class PostController {
         return ResponseEntity.ok(new ApiResponse<>(true, "Post published successfully", finalizedPost));
     }
 
-    // --- 2. GLOBAL FEED & SEARCH ENDPOINTS ---
-
     @GetMapping("/feed")
     public ResponseEntity<ApiResponse<Page<PostResponse>>> getAllPosts(
             @RequestParam(defaultValue = "0") int page,
@@ -67,7 +63,6 @@ public class PostController {
     public ResponseEntity<ApiResponse<Page<PostResponse>>> getExplorePosts(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        // Requires a method in PostService to fetch posts where isExplore = true
         Page<PostResponse> posts = postService.getExplorePosts(page, size);
         return ResponseEntity.ok(new ApiResponse<>(true, "Explore feed fetched successfully", posts));
     }
@@ -80,8 +75,6 @@ public class PostController {
         Page<PostResponse> posts = postService.searchPosts(keyword, page, size);
         return ResponseEntity.ok(new ApiResponse<>(true, "Search results fetched", posts));
     }
-
-    // --- 3. INDIVIDUAL POST ENDPOINTS ---
 
     @Transactional(readOnly = true)
     @GetMapping("/detail/{postId}")
@@ -115,14 +108,11 @@ public class PostController {
         return ResponseEntity.ok(new ApiResponse<>(true, "Upvote toggled successfully", null));
     }
 
-    // --- 4. USER-SPECIFIC ENDPOINTS ---
-
     @GetMapping("/user/{userId}/portfolio")
     public ResponseEntity<ApiResponse<Page<PostResponse>>> getPostsByUserId(
             @PathVariable Long userId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        // Upgraded to Page instead of List for safer rendering
         Page<PostResponse> userPosts = postService.getPostsByUserId(userId, page, size);
         return ResponseEntity.ok(new ApiResponse<>(true, "User portfolio fetched", userPosts));
     }
@@ -132,7 +122,6 @@ public class PostController {
             @AuthenticationPrincipal User user,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        // Automatically fetches based on logged-in user's token
         Page<PostResponse> userPosts = postService.getPostsByUserId(user.getId(), page, size);
         return ResponseEntity.ok(new ApiResponse<>(true, "Your portfolio fetched", userPosts));
     }
@@ -142,7 +131,6 @@ public class PostController {
             @AuthenticationPrincipal User user,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        // Requires a method in PostService to fetch user's posts where status = DRAFT
         Page<PostResponse> drafts = postService.getUserDrafts(user.getId(), page, size);
         return ResponseEntity.ok(new ApiResponse<>(true, "Drafts fetched", drafts));
     }

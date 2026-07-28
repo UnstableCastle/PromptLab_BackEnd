@@ -1,6 +1,5 @@
 package com.promptlab.server.config;
 
-
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -38,7 +37,6 @@ public class SecurityConfig {
         this.userDetailsService = userDetailsService;
     }
 
-    
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -47,9 +45,10 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll() 
                 .requestMatchers("/api/auth/**").permitAll()
+                // SECURED ADMIN ROUTE
+                .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
                 .anyRequest().authenticated()
             )
-            // ADD THIS EXCEPTION HANDLING BLOCK
             .exceptionHandling(exceptions -> exceptions
                 .authenticationEntryPoint((request, response, authException) -> {
                     response.setContentType("application/json");
@@ -62,7 +61,6 @@ public class SecurityConfig {
                     response.getWriter().write("{\"success\":false,\"message\":\"You do not have permission to access this resource\",\"data\":null}");
                 })
             )
-            // END OF EXCEPTION HANDLING BLOCK
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authenticationProvider(authenticationProvider())
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
@@ -91,7 +89,6 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // Note: Change "*" to specific frontend origins (e.g., "http://localhost:3000") in production
         configuration.setAllowedOrigins(List.of("*")); 
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With"));

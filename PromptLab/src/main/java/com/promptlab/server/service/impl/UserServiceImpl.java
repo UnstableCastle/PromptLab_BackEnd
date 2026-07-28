@@ -22,7 +22,6 @@ public class UserServiceImpl implements UserService {
     private final FollowRepository followRepository;
     private final PostRepository postRepository;
 
-    // Injected all required repositories
     public UserServiceImpl(UserRepository userRepository, FollowRepository followRepository, PostRepository postRepository) {
         this.userRepository = userRepository;
         this.followRepository = followRepository;
@@ -67,37 +66,42 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public void deleteUser(Long id) {
+    public void deleteUser(Long id, String currentUsername) {
         if (!userRepository.existsById(id)) {
             throw new RuntimeException("User not found with ID: " + id);
         }
+        
+        User currentUser = userRepository.findByUsername(currentUsername)
+                .orElseThrow(() -> new RuntimeException("Current user not found"));
+
+        boolean isSelf = currentUser.getId().equals(id);
+        boolean isAdmin = currentUser.getAuthorities().stream()
+                .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
+
+        if (!isSelf && !isAdmin) {
+            throw new RuntimeException("Unauthorized: You only have permission to delete your own profile.");
+        }
+        
         userRepository.deleteById(id);
     }
 
     @Override
     public User findByUsername(String currentUsername) {
-        // Implemented the auto-generated stub
         return userRepository.findByUsername(currentUsername)
                 .orElseThrow(() -> new RuntimeException("User not found: " + currentUsername));
     }
 
-    // --- HELPER METHOD TO MAP TO YOUR EXACT RECORD ---
     private UserProfileResponse mapToUserProfileResponse(User targetUser, String currentUsername) {
-        
-        // 1. Resolve if the current logged-in user follows this target user
         boolean followedByCurrentUser = false;
         if (currentUsername != null && !currentUsername.equals(targetUser.getUsername())) {
             User currentUser = findByUsername(currentUsername);
-            // Reusing the existsByFollowerAndFollowing method from your FollowService setup
             followedByCurrentUser = followRepository.existsByFollowerAndFollowing(currentUser, targetUser);
         }
 
-        // 2. Fetch aggregate statistics using standard Spring Data JPA derived queries
         long followerCount = followRepository.countByFollowing(targetUser);
         long followingCount = followRepository.countByFollower(targetUser);
         long postCount = postRepository.countByUser(targetUser); 
 
-        // 3. Construct and return your specific Record
         return new UserProfileResponse(
             targetUser.getUsername(),
             targetUser.getBio(),
