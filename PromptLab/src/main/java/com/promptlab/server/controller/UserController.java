@@ -78,21 +78,21 @@ public class UserController {
     //          SOCIAL / FOLLOW OPERATIONS
     // ==========================================
 
-    @PostMapping("/{userId}/follow")
-    public ResponseEntity<ApiResponse<Void>> followUser(
-            @PathVariable Long userId,
-            @AuthenticationPrincipal User user) {
-        
-        followService.followUser(user, userId);
-        return ResponseEntity.ok(new ApiResponse<>(true, "User followed successfully", null));
-    }
-
-    @DeleteMapping("/{userId}/unfollow")
-    public ResponseEntity<ApiResponse<Void>> unfollowUser(
-            @PathVariable Long userId,
-            @AuthenticationPrincipal User user) {
-        
-        followService.unfollowUser(user, userId);
-        return ResponseEntity.ok(new ApiResponse<>(true, "User unfollowed successfully", null));
-    }
+//    @PostMapping("/{userId}/follow")
+//    public ResponseEntity<ApiResponse<Void>> followUser(
+//            @PathVariable Long userId,
+//            @AuthenticationPrincipal User user) {
+//        
+//        followService.followUser(user, userId);
+//        return ResponseEntity.ok(new ApiResponse<>(true, "User followed successfully", null));
+//    }
+//
+//    @DeleteMapping("/{userId}/unfollow")
+//    public ResponseEntity<ApiResponse<Void>> unfollowUser(
+//            @PathVariable Long userId,
+//            @AuthenticationPrincipal User user) {
+//        
+//        followService.unfollowUser(user, userId);
+//        return ResponseEntity.ok(new ApiResponse<>(true, "User unfollowed successfully", null));
+//    }
 }
