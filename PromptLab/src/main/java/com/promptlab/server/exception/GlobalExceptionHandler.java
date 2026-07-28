@@ -14,8 +14,6 @@ import java.util.HashMap;
 import java.util.Map;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.NoSuchElementException;
-import jakarta.persistence.EntityNotFoundException;
-import java.util.NoSuchElementException;
 import org.springframework.web.servlet.resource.NoResourceFoundException; // Add this import
 
 @RestControllerAdvice
@@ -26,15 +24,7 @@ public class GlobalExceptionHandler {
      * Maps field names to their specific error messages.
      */
 	
-	@ExceptionHandler({
-        EntityNotFoundException.class, 
-        NoSuchElementException.class,
-        NoResourceFoundException.class // Add this to catch incorrect URLs
-    })
-    public ResponseEntity<ApiResponse<Void>> handleNotFoundExceptions1(Exception ex) {
-        ApiResponse<Void> response = new ApiResponse<>(false, "Resource or endpoint not found: " + ex.getMessage());
-        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-    }
+
 	
 	@ExceptionHandler({
         EntityNotFoundException.class, 
