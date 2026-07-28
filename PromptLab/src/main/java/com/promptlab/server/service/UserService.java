@@ -15,7 +15,7 @@ public interface UserService {
     
     UserProfileResponse updateUser(Long id, UserUpdateRequest request, String currentUsername);
     
-    void deleteUser(Long id);
+    void deleteUser(Long id, String currentUsername);
 
-	User findByUsername(String currentUsername);
+    User findByUsername(String currentUsername);
 }
