@@ -7,5 +7,8 @@ public record AuthenticationResponse(
     String tokenType,
     String username,
     String email,
+    Long Id,
     String role
-) {}
+) {
+
+	}
