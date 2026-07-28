@@ -1,7 +1,5 @@
 package com.promptlab.server.controller;
 
-import java.util.List;
-
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -30,18 +28,15 @@ public class PostController {
         this.fileService = fileService;
     }
 
-    // --- NEW DRAFT-FIRST WORKFLOW ENDPOINTS ---
+    // --- 1. CREATION & WORKFLOW ENDPOINTS ---
 
-    // 1. BACKGROUND INIT: Creates the blank draft instantly
     @PostMapping("/init")
     public ResponseEntity<ApiResponse<PostResponse>> initializeDraft(@AuthenticationPrincipal User user) {
-        // Requires a new method in PostService to save a draft state
         PostResponse draftPost = postService.createDraftPost(user); 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new ApiResponse<>(true, "Draft initialized", draftPost));
     }
 
-    // 2. SUBMIT: Accepts the JSON text data and the MultipartFile in one single request
     @PutMapping(value = "/{postId}/submit", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<Object>> submitPost(
             @PathVariable Long postId,
@@ -50,26 +45,31 @@ public class PostController {
             @RequestPart(value = "file", required = false) MultipartFile file) {
 
         String attachmentUrl = null;
-        
-        // Handle the file upload if the user attached one
         if (file != null && !file.isEmpty()) {
             attachmentUrl = fileService.uploadPostFile(postId, user, file);
         }
 
-        // Requires a new method in PostService to apply the request data, set the URL, and change status to PUBLISHED
         Object finalizedPost = postService.finalizeDraft(postId, user, request, attachmentUrl);
-
         return ResponseEntity.ok(new ApiResponse<>(true, "Post published successfully", finalizedPost));
     }
 
-    // --- EXISTING ENDPOINTS ---
+    // --- 2. GLOBAL FEED & SEARCH ENDPOINTS ---
 
-    @GetMapping
+    @GetMapping("/feed")
     public ResponseEntity<ApiResponse<Page<PostResponse>>> getAllPosts(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         Page<PostResponse> posts = postService.getAllPosts(page, size);
-        return ResponseEntity.ok(new ApiResponse<>(true, "Posts fetched successfully", posts));
+        return ResponseEntity.ok(new ApiResponse<>(true, "Feed fetched successfully", posts));
+    }
+
+    @GetMapping("/explore")
+    public ResponseEntity<ApiResponse<Page<PostResponse>>> getExplorePosts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        // Requires a method in PostService to fetch posts where isExplore = true
+        Page<PostResponse> posts = postService.getExplorePosts(page, size);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Explore feed fetched successfully", posts));
     }
 
     @GetMapping("/search")
@@ -78,17 +78,19 @@ public class PostController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         Page<PostResponse> posts = postService.searchPosts(keyword, page, size);
-        return ResponseEntity.ok(new ApiResponse<>(true, "Posts searched successfully", posts));
+        return ResponseEntity.ok(new ApiResponse<>(true, "Search results fetched", posts));
     }
 
-    @Transactional
-    @GetMapping("/{postId}")
+    // --- 3. INDIVIDUAL POST ENDPOINTS ---
+
+    @Transactional(readOnly = true)
+    @GetMapping("/detail/{postId}")
     public ResponseEntity<ApiResponse<Object>> getPostById(@PathVariable Long postId) {
         Object post = postService.getPostById(postId);
-        return ResponseEntity.ok(new ApiResponse<>(true, "Post fetched successfully", post));
+        return ResponseEntity.ok(new ApiResponse<>(true, "Post details fetched", post));
     }
 
-    @PutMapping("/{postId}")
+    @PutMapping("/detail/{postId}")
     public ResponseEntity<ApiResponse<Object>> updatePost(
             @PathVariable Long postId,
             @AuthenticationPrincipal User user,
@@ -97,7 +99,7 @@ public class PostController {
         return ResponseEntity.ok(new ApiResponse<>(true, "Post updated successfully", updatedPost));
     }
 
-    @DeleteMapping("/{postId}")
+    @DeleteMapping("/detail/{postId}")
     public ResponseEntity<ApiResponse<Void>> deletePost(
             @PathVariable Long postId,
             @AuthenticationPrincipal User user) {
@@ -105,20 +107,43 @@ public class PostController {
         return ResponseEntity.ok(new ApiResponse<>(true, "Post deleted successfully", null));
     }
 
-    @PostMapping("/{postId}/upvote")
+    @PostMapping("/detail/{postId}/upvote")
     public ResponseEntity<ApiResponse<Void>> toggleUpvote(
             @PathVariable Long postId,
             @AuthenticationPrincipal User user) {
         upvoteService.toggleUpvote(postId, user);
         return ResponseEntity.ok(new ApiResponse<>(true, "Upvote toggled successfully", null));
     }
- // Add this new endpoint inside your PostController class, perhaps under the existing GET methods
 
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<ApiResponse<List<PostResponse>>> getPostsByUserId(@PathVariable Long userId) {
-        List<PostResponse> userPosts = postService.getPostsByUserId(userId);
-        return ResponseEntity.ok(new ApiResponse<>(true, "User posts fetched successfully", userPosts));
+    // --- 4. USER-SPECIFIC ENDPOINTS ---
+
+    @GetMapping("/user/{userId}/portfolio")
+    public ResponseEntity<ApiResponse<Page<PostResponse>>> getPostsByUserId(
+            @PathVariable Long userId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        // Upgraded to Page instead of List for safer rendering
+        Page<PostResponse> userPosts = postService.getPostsByUserId(userId, page, size);
+        return ResponseEntity.ok(new ApiResponse<>(true, "User portfolio fetched", userPosts));
     }
-    
-    
+
+    @GetMapping("/me/portfolio")
+    public ResponseEntity<ApiResponse<Page<PostResponse>>> getMyPosts(
+            @AuthenticationPrincipal User user,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        // Automatically fetches based on logged-in user's token
+        Page<PostResponse> userPosts = postService.getPostsByUserId(user.getId(), page, size);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Your portfolio fetched", userPosts));
+    }
+
+    @GetMapping("/me/drafts")
+    public ResponseEntity<ApiResponse<Page<PostResponse>>> getMyDrafts(
+            @AuthenticationPrincipal User user,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        // Requires a method in PostService to fetch user's posts where status = DRAFT
+        Page<PostResponse> drafts = postService.getUserDrafts(user.getId(), page, size);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Drafts fetched", drafts));
+    }
 }

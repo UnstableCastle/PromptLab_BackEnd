@@ -15,6 +15,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface PostRepository extends JpaRepository<Post, Long> {
+    
     @EntityGraph(attributePaths = {"user"})
     Page<Post> findAllByOrderByCreatedAtDesc(Pageable pageable);
     
@@ -23,13 +24,24 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
     long countByUser(User user);
     
+    // Kept your old one just in case you need it elsewhere
     List<Post> findByUserId(Long userId);
+
+    // --- NEW QUERIES FOR CONTROLLER ---
+    
+    // 1. For the /user/{userId}/portfolio & /me/portfolio endpoints (Paginated)
+    @EntityGraph(attributePaths = {"user"})
+    Page<Post> findByUserIdOrderByCreatedAtDesc(Long userId, Pageable pageable);
+
+    // 2. For the /explore endpoint
+    @EntityGraph(attributePaths = {"user"})
+    Page<Post> findByIsExploreTrueOrderByCreatedAtDesc(Pageable pageable);
+
+    // 3. For the /me/drafts endpoint
+    @EntityGraph(attributePaths = {"user"})
+    Page<Post> findByUserIdAndStatusOrderByCreatedAtDesc(Long userId, String status, Pageable pageable);
 
     @EntityGraph(attributePaths = {"user"})
     @Query("SELECT p FROM Post p WHERE LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(CAST(p.promptText AS string)) LIKE LOWER(CONCAT('%', :keyword, '%')) ORDER BY p.createdAt DESC")
     Page<Post> searchPosts(@Param("keyword") String keyword, Pageable pageable);
-    
-//    @EntityGraph(attributePaths = {"user"})
-//    @Query("SELECT DISTINCT p FROM Post p WHERE LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(CAST(p.promptText AS string)) LIKE LOWER(CONCAT('%', :keyword, '%')) ORDER BY p.createdAt DESC")
-//    Page<Post> searchPosts(@Param("keyword") String keyword, Pageable pageable);
 }

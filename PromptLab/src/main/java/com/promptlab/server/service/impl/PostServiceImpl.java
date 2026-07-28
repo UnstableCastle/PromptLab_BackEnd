@@ -22,12 +22,9 @@ public class PostServiceImpl implements PostService {
         this.postRepository = postRepository;
     }
 
-    // --- NEW DRAFT-FIRST METHODS ---
-
     @Override
     @Transactional
     public PostResponse createDraftPost(User user) {
-        // Initialize with dummy data to satisfy @NotBlank database constraints
         Post draft = Post.builder()
                 .title("Untitled Draft") 
                 .promptText("Draft content...") 
@@ -36,10 +33,10 @@ public class PostServiceImpl implements PostService {
                 .user(user)
                 .upvoteCount(0)
                 .isExplore(false)
+                .status("DRAFT") // Set initial status
                 .build();
 
         Post savedDraft = postRepository.save(draft);
-
         return mapToPostResponse(savedDraft);
     }
 
@@ -49,27 +46,22 @@ public class PostServiceImpl implements PostService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found with id: " + postId));
 
-        // Ensure only the owner can finalize their draft
         if (!post.getUser().getId().equals(user.getId())) {
             throw new RuntimeException("Unauthorized to update this post");
         }
 
-        // Apply the actual user data to the draft
         post.setTitle(request.title());
         post.setPromptText(request.promptText());
         post.setModelInfo(request.modelInfo());
+        post.setStatus("PUBLISHED"); // Mark as published
         
-        // Only update the attachment URL if a new file was uploaded during submission
         if (attachmentUrl != null) {
             post.setAttachmentUrl(attachmentUrl);
         }
 
         Post updatedPost = postRepository.save(post);
-
         return mapToPostResponse(updatedPost);
     }
-
-    // --- EXISTING METHODS ---
 
     @Override
     public Page<PostResponse> getAllPosts(int page, int size) {
@@ -89,19 +81,16 @@ public class PostServiceImpl implements PostService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found with id: " + postId));
 
-        // Ensure only the owner can update their post
         if (!post.getUser().getId().equals(user.getId())) {
             throw new RuntimeException("Unauthorized to update this post");
         }
 
-        // Update fields if provided
         post.setTitle(request.title());
         post.setPromptText(request.promptText());
         post.setModelInfo(request.modelInfo());
         post.setAttachmentUrl(request.attachmentUrl());
 
         Post updatedPost = postRepository.save(post);
-
         return mapToPostResponse(updatedPost);
     }
 
@@ -111,7 +100,6 @@ public class PostServiceImpl implements PostService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found with id: " + postId));
 
-        // Ensure only the owner can delete their post
         if (!post.getUser().getId().equals(user.getId())) {
             throw new RuntimeException("Unauthorized to delete this post");
         }
@@ -127,6 +115,29 @@ public class PostServiceImpl implements PostService {
         return mapToPostResponse(post);
     }
 
+    // --- NEW PAGINATED FEED METHODS ---
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<PostResponse> getPostsByUserId(Long userId, int page, int size) {
+        return postRepository.findByUserIdOrderByCreatedAtDesc(userId, PageRequest.of(page, size))
+                .map(this::mapToPostResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<PostResponse> getExplorePosts(int page, int size) {
+        return postRepository.findByIsExploreTrueOrderByCreatedAtDesc(PageRequest.of(page, size))
+                .map(this::mapToPostResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<PostResponse> getUserDrafts(Long userId, int page, int size) {
+        return postRepository.findByUserIdAndStatusOrderByCreatedAtDesc(userId, "DRAFT", PageRequest.of(page, size))
+                .map(this::mapToPostResponse);
+    }
+
     private PostResponse mapToPostResponse(Post post) {
         return new PostResponse(
             post.getId(),
@@ -136,18 +147,10 @@ public class PostServiceImpl implements PostService {
             post.getAttachmentUrl(),
             post.getUpvoteCount(),
             post.isExplore(),
-            post.getStatus(),
+            post.getUser() != null ? post.getUser().getId() : null, 
             post.getUser() != null ? post.getUser().getUsername() : null,
+            post.getStatus(),                                             
             post.getCreatedAt()
         );
     }
-
-	@Override
-	@Transactional
-	public List<PostResponse> getPostsByUserId(Long userId) {
-		// TODO Auto-generated method stub
-		return postRepository.findByUserId(userId).stream()
-                .map(this::mapToPostResponse)
-                .collect(Collectors.toList());
-	}
 }
