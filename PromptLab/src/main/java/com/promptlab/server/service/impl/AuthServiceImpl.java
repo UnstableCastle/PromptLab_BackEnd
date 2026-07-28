@@ -80,6 +80,7 @@ public class AuthServiceImpl implements AuthService {
                 "Bearer", 
                 user.getUsername(), 
                 user.getEmail(), 
+                user.getId(),
                 user.getRole().name()
         );
     }
@@ -97,7 +98,7 @@ public class AuthServiceImpl implements AuthService {
                             "Bearer", 
                             user.getUsername(), 
                             user.getEmail(), 
-                            user.getRole().name()
+                            null, user.getRole().name()
                     );
                 })
                 .orElseThrow(() -> new RuntimeException("Refresh token is invalid or missing!"));
