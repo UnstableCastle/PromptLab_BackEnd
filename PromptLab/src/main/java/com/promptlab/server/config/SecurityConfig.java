@@ -45,6 +45,10 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll() 
                 .requestMatchers("/api/auth/**").permitAll()
+                
+                // Added permission for static uploads directory
+                .requestMatchers("/uploads/**").permitAll()
+                
                 // SECURED ADMIN ROUTE
                 .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
                 .anyRequest().authenticated()
