@@ -58,11 +58,11 @@ public class AuthController {
     
     //-------------- 
     
-    @PostMapping("/verify-account")
-    public ResponseEntity<ApiResponse<Void>> verifyAccount(@Valid @RequestBody VerificationRequest request) {
-        authService.verifyAccount(request.email(), request.otp());
-        return ResponseEntity.ok(new ApiResponse<>(true, "Account verified successfully. You may now log in."));
-    }
+//    @PostMapping("/verify-account")
+//    public ResponseEntity<ApiResponse<Void>> verifyAccount(@Valid @RequestBody VerificationRequest request) {
+//        authService.verifyAccount(request.email(), request.otp());
+//        return ResponseEntity.ok(new ApiResponse<>(true, "Account verified successfully. You may now log in."));
+//    }
 
 
     @GetMapping("/me")

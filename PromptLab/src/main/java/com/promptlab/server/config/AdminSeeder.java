@@ -18,7 +18,7 @@ public class AdminSeeder {
             // Fixed the typo in the email string below
             if (userRepository.findByEmail("promptlab.developer@gmail.com").isEmpty()) {
                 User admin = new User();
-                admin.setUsername("Amin");
+                admin.setUsername("Admin");
                 admin.setEmail("promptlab.developer@gmail.com"); 
                 admin.setPasswordHash(passwordEncoder.encode("admin123"));
                 admin.setRole(Role.ROLE_ADMIN); // Ensure ROLE_ADMIN exists in your Role enum
