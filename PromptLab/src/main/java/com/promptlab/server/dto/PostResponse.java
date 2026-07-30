@@ -1,19 +1,44 @@
 package com.promptlab.server.dto;
 
+import com.promptlab.server.entity.Post;
 import java.time.LocalDateTime;
 
-// Inside com.promptlab.server.dto.PostResponse (or similar package)
-
 public record PostResponse(
-	    Long id, 
-	    String title, 
-	    String promptText, 
-	    String modelInfo, 
-	    String attachmentUrl, 
-	    Integer upvoteCount, 
-	    Boolean isExplore, 
-	    Long userId,            // Added here
-	    String authorUsername,  // Swapped order
-	    String status,          // Swapped order
-	    LocalDateTime createdAt
-	) {} 
+        Long id, 
+        String title, 
+        String promptText, 
+        String modelInfo, 
+        String attachmentUrl, 
+        Integer upvoteCount, 
+        Boolean isExplore, 
+        Long userId,            
+        String authorUsername,  
+        String status,          
+        LocalDateTime createdAt
+) {
+
+    // Static factory method to convert a JPA entity to this DTO record
+    public static PostResponse fromEntity(Post post) {
+        if (post == null) {
+            return null;
+        }
+        
+        // Safely extract user details to prevent NullPointerExceptions
+        Long authorId = post.getUser() != null ? post.getUser().getId() : null;
+        String authorName = post.getUser() != null ? post.getUser().getUsername() : null;
+
+        return new PostResponse(
+                post.getId(),
+                post.getTitle(),
+                post.getPromptText(),
+                post.getModelInfo(),
+                post.getAttachmentUrl(),
+                post.getUpvoteCount(),
+                post.isExplore(), // Ensure your Post entity has a getIsExplore() or similar boolean getter
+                authorId,
+                authorName,
+                post.getStatus(),
+                post.getCreatedAt()
+        );
+    }
+}

@@ -44,4 +44,14 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     @EntityGraph(attributePaths = {"user"})
     @Query("SELECT p FROM Post p WHERE LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(CAST(p.promptText AS string)) LIKE LOWER(CONCAT('%', :keyword, '%')) ORDER BY p.createdAt DESC")
     Page<Post> searchPosts(@Param("keyword") String keyword, Pageable pageable);
+
+    // --- NEW QUERIES FOR ADMIN DASHBOARD ---
+
+    // Offloads the heavy calculation of total likes to the MySQL database
+    @Query("SELECT COALESCE(SUM(p.upvoteCount), 0) FROM Post p")
+    long countTotalLikes();
+
+    // Fetches top 5 recent posts with the author eagerly loaded to prevent N+1 issues
+    @EntityGraph(attributePaths = {"user"})
+    List<Post> findTop5ByOrderByCreatedAtDesc();
 }
