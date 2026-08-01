@@ -11,8 +11,9 @@ public record PostResponse(
         String attachmentUrl, 
         Integer upvoteCount, 
         Boolean isExplore, 
-        Long userId,            
+        Long userId,  
         String authorUsername,  
+        String profilePicture,
         String status,          
         LocalDateTime createdAt,
         Boolean hasUpvoted
@@ -27,6 +28,7 @@ public record PostResponse(
         // Safely extract user details to prevent NullPointerExceptions
         Long authorId = post.getUser() != null ? post.getUser().getId() : null;
         String authorName = post.getUser() != null ? post.getUser().getUsername() : null;
+        String profilePicture = post.getUser().getProfilePicture();
 
         return new PostResponse(
                 post.getId(),
@@ -38,6 +40,7 @@ public record PostResponse(
                 post.isExplore(), 
                 authorId,
                 authorName,
+                profilePicture,
                 post.getStatus(),
                 post.getCreatedAt(),
                 hasUpvoted

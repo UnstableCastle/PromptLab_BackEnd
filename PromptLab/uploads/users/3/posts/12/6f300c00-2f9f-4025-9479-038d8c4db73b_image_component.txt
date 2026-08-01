@@ -1,0 +1,16 @@
+function Profile() {
+  return (
+    <img
+      src="/images/profile.jpg"
+      alt="Profile"
+      width={200}
+      height={200}
+    />
+  );
+}
+
+import logo from "./assets/logo.png";
+
+function App() {
+  return <img src={logo} alt="Logo" />;
+}

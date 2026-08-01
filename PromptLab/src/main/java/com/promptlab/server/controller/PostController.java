@@ -174,7 +174,7 @@ public class PostController {
                 new ApiResponse<>(true, "Post updated successfully", updatedPost));
     }
 
-    @DeleteMapping("/detail/{postId}")
+    @DeleteMapping("/delete/{postId}")
     public ResponseEntity<ApiResponse<Void>> deletePost(
             @PathVariable Long postId,
             @AuthenticationPrincipal User user) {
@@ -205,7 +205,7 @@ public class PostController {
 
         Page<PostResponse> userPosts =
                 postService.getPostsByUserId(userId, user, page, size);
-
+System.out.println("");
         return ResponseEntity.ok(
                 new ApiResponse<>(true, "User portfolio fetched", userPosts));
     }

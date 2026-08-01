@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial, Helvetica, sans-serif;
+}
+
+body{
+    background:#f4f6f9;
+}
+
+.header{
+    background:#2563eb;
+    color:#fff;
+    padding:20px 30px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.container{
+    width:95%;
+    margin:20px auto;
+}
+
+.cards{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:20px;
+}
+
+.card{
+    background:#fff;
+    padding:20px;
+    border-radius:10px;
+    box-shadow:0 2px 8px rgba(0,0,0,.1);
+}
+
+.card h3{
+    color:#666;
+    margin-bottom:10px;
+}
+
+.card p{
+    font-size:28px;
+    color:#2563eb;
+    font-weight:bold;
+}
+
+.content{
+    display:grid;
+    grid-template-columns:1fr 2fr;
+    gap:20px;
+    margin-top:25px;
+}
+
+.panel{
+    background:#fff;
+    padding:20px;
+    border-radius:10px;
+    box-shadow:0 2px 8px rgba(0,0,0,.1);
+}
+
+.profile{
+    text-align:center;
+}
+
+.profile img{
+    width:100px;
+    height:100px;
+    border-radius:50%;
+    margin-bottom:15px;
+}
+
+.profile h2{
+    margin-bottom:8px;
+}
+
+.profile p{
+    color:#666;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:15px;
+}
+
+th,td{
+    padding:12px;
+    border-bottom:1px solid #ddd;
+    text-align:left;
+}
+
+th{
+    background:#2563eb;
+    color:white;
+}
+
+.status{
+    padding:4px 10px;
+    border-radius:20px;
+    color:white;
+    font-size:12px;
+}
+
+.active{
+    background:#16a34a;
+}
+
+.pending{
+    background:#f59e0b;
+}
+
+.footer{
+    margin-top:20px;
+    text-align:center;
+    color:#666;
+    padding:15px;
+}
+
+@media(max-width:768px){
+    .content{
+        grid-template-columns:1fr;
+    }
+
+    .header{
+        flex-direction:column;
+        gap:10px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+    <h1>Dashboard</h1>
+    <div id="clock"></div>
+</div>
+
+<div class="container">
+
+    <div class="cards">
+
+        <div class="card">
+            <h3>Total Users</h3>
+            <p>1,245</p>
+        </div>
+
+        <div class="card">
+            <h3>Orders</h3>
+            <p>328</p>
+        </div>
+
+        <div class="card">
+            <h3>Revenue</h3>
+            <p>$12,850</p>
+        </div>
+
+        <div class="card">
+            <h3>Tasks</h3>
+            <p>18</p>
+        </div>
+
+    </div>
+
+    <div class="content">
+
+        <div class="panel profile">
+
+            <img src="https://via.placeholder.com/100" alt="Profile">
+
+            <h2>John Doe</h2>
+
+            <p>Administrator</p>
+
+            <br>
+
+            <p>Email: john@example.com</p>
+            <p>Phone: +1 123 456 7890</p>
+
+        </div>
+
+        <div class="panel">
+
+            <h2>Recent Activities</h2>
+
+            <table>
+
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Activity</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    <tr>
+                        <td>#1001</td>
+                        <td>New User Registered</td>
+                        <td><span class="status active">Completed</span></td>
+                    </tr>
+
+                    <tr>
+                        <td>#1002</td>
+                        <td>Payment Received</td>
+                        <td><span class="status active">Completed</span></td>
+                    </tr>
+
+                    <tr>
+                        <td>#1003</td>
+                        <td>Order Processing</td>
+                        <td><span class="status pending">Pending</span></td>
+                    </tr>
+
+                    <tr>
+                        <td>#1004</td>
+                        <td>Support Ticket</td>
+                        <td><span class="status pending">Pending</span></td>
+                    </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+    <div class="footer">
+        © 2026 Dashboard | HTML • CSS • JavaScript
+    </div>
+
+</div>
+
+<script>
+function updateClock() {
+    const now = new Date();
+
+    const options = {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric"
+    };
+
+    const date = now.toLocaleDateString(undefined, options);
+    const time = now.toLocaleTimeString();
+
+    document.getElementById("clock").innerHTML =
+        date + " | " + time;
+}
+
+updateClock();
+setInterval(updateClock, 1000);
+</script>
+
+</body>
+</html>
