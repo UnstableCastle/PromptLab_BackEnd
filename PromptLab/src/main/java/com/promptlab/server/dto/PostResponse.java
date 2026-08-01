@@ -14,11 +14,12 @@ public record PostResponse(
         Long userId,            
         String authorUsername,  
         String status,          
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        Boolean hasUpvoted
 ) {
 
-    // Static factory method to convert a JPA entity to this DTO record
-    public static PostResponse fromEntity(Post post) {
+    // Static factory method to convert a JPA entity to this DTO record with upvote tracking
+    public static PostResponse fromEntity(Post post, Boolean hasUpvoted) {
         if (post == null) {
             return null;
         }
@@ -34,11 +35,12 @@ public record PostResponse(
                 post.getModelInfo(),
                 post.getAttachmentUrl(),
                 post.getUpvoteCount(),
-                post.isExplore(), // Ensure your Post entity has a getIsExplore() or similar boolean getter
+                post.isExplore(), 
                 authorId,
                 authorName,
                 post.getStatus(),
-                post.getCreatedAt()
+                post.getCreatedAt(),
+                hasUpvoted
         );
     }
 }

@@ -5,9 +5,11 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.promptlab.server.dto.UserProfileResponse;
 import com.promptlab.server.dto.UserUpdateRequest;
+import com.promptlab.server.entity.Role;
 import com.promptlab.server.entity.User;
 import com.promptlab.server.repository.FollowRepository;
 import com.promptlab.server.repository.PostRepository;
@@ -44,7 +46,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<UserProfileResponse> getAllUsers(String currentUsername) {
-        return userRepository.findAll().stream()
+        return userRepository.findByRole(Role.ROLE_USER).stream() 
                 .map(user -> mapToUserProfileResponse(user, currentUsername))
                 .collect(Collectors.toList());
     }
@@ -55,7 +57,6 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found with ID: " + id));
 
-        // Update basic social fields
         if (request.bio() != null) user.setBio(request.bio());
         if (request.profilePicture() != null) user.setProfilePicture(request.profilePicture());
         if (request.isPrivate() != null) user.setPrivate(request.isPrivate());
@@ -102,6 +103,7 @@ public class UserServiceImpl implements UserService {
         long followingCount = followRepository.countByFollower(targetUser);
         long postCount = postRepository.countByUser(targetUser); 
 
+        // FIXED: Restored the missing constructor arguments
         return new UserProfileResponse(
             targetUser.getUsername(),
             targetUser.getBio(),
@@ -112,5 +114,35 @@ public class UserServiceImpl implements UserService {
             postCount,
             followedByCurrentUser
         );
+    }
+
+    @Override
+    @Transactional
+    public UserProfileResponse updateUserWithFile(Long id, String username, String email, String bio, MultipartFile file, String currentUsername) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found with ID: " + id));
+
+        if (username != null && !username.isBlank()) user.setUsername(username.trim());
+        if (email != null && !email.isBlank()) user.setEmail(email.trim());
+        if (bio != null) user.setBio(bio);
+
+        if (file != null && !file.isEmpty()) {
+            try {
+                java.nio.file.Path userDir = java.nio.file.Paths.get("uploads", "users", String.valueOf(id));
+                java.nio.file.Files.createDirectories(userDir);
+
+                String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
+                java.nio.file.Path filePath = userDir.resolve(fileName);
+                java.nio.file.Files.copy(file.getInputStream(), filePath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+
+                String fileUrl = "/uploads/users/" + id + "/" + fileName;
+                user.setProfilePicture(fileUrl);
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to store profile picture: " + e.getMessage());
+            }
+        }
+
+        userRepository.save(user);
+        return mapToUserProfileResponse(user, currentUsername);
     }
 }

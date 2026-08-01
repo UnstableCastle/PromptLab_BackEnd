@@ -15,7 +15,8 @@ public class AdminUserResponse {
 
     private String email;
 
-    private String attachmentUrl;
+    
+    private String profilePicture; 
 
     private Long postCount;
 }

@@ -14,9 +14,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class PostServiceImpl implements PostService {
 
     private final PostRepository postRepository;
+    private final UpvoteRepository upvoteRepository;
 
-    public PostServiceImpl(PostRepository postRepository) {
+    public PostServiceImpl(PostRepository postRepository, UpvoteRepository upvoteRepository) {
         this.postRepository = postRepository;
+        this.upvoteRepository = upvoteRepository;
     }
 
     @Override
@@ -34,7 +36,7 @@ public class PostServiceImpl implements PostService {
                 .build();
 
         Post savedDraft = postRepository.save(draft);
-        return mapToPostResponse(savedDraft);
+        return mapToPostResponse(savedDraft, user);
     }
 
     @Override
@@ -61,19 +63,19 @@ public class PostServiceImpl implements PostService {
         }
 
         Post updatedPost = postRepository.save(post);
-        return mapToPostResponse(updatedPost);
+        return mapToPostResponse(updatedPost, user);
     }
 
     @Override
-    public Page<PostResponse> getAllPosts(int page, int size) {
+    public Page<PostResponse> getAllPosts(User currentUser, int page, int size) {
         return postRepository.findAllByOrderByCreatedAtDesc(PageRequest.of(page, size))
-                .map(this::mapToPostResponse);
+                .map(post -> mapToPostResponse(post, currentUser));
     }
 
     @Override
-    public Page<PostResponse> searchPosts(String keyword, int page, int size) {
+    public Page<PostResponse> searchPosts(String keyword, User currentUser, int page, int size) {
         return postRepository.searchPosts(keyword, PageRequest.of(page, size))
-                .map(this::mapToPostResponse);
+                .map(post -> mapToPostResponse(post, currentUser));
     }
 
     @Override
@@ -96,7 +98,7 @@ public class PostServiceImpl implements PostService {
         post.setAttachmentUrl(request.attachmentUrl());
 
         Post updatedPost = postRepository.save(post);
-        return mapToPostResponse(updatedPost);
+        return mapToPostResponse(updatedPost, user);
     }
 
     @Override
@@ -117,47 +119,39 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    public PostResponse getPostById(Long postId) {
+    public Object getPostById(Long postId, User currentUser) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found with id: " + postId));
         
-        return mapToPostResponse(post);
+        return mapToPostResponse(post, currentUser);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<PostResponse> getPostsByUserId(Long userId, int page, int size) {
+    public Page<PostResponse> getPostsByUserId(Long userId, User currentUser, int page, int size) {
         return postRepository.findByUserIdOrderByCreatedAtDesc(userId, PageRequest.of(page, size))
-                .map(this::mapToPostResponse);
+                .map(post -> mapToPostResponse(post, currentUser));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<PostResponse> getExplorePosts(int page, int size) {
+    public Page<PostResponse> getExplorePosts(User currentUser, int page, int size) {
         return postRepository.findByIsExploreTrueOrderByCreatedAtDesc(PageRequest.of(page, size))
-                .map(this::mapToPostResponse);
+                .map(post -> mapToPostResponse(post, currentUser));
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<PostResponse> getUserDrafts(Long userId, int page, int size) {
         return postRepository.findByUserIdAndStatusOrderByCreatedAtDesc(userId, "DRAFT", PageRequest.of(page, size))
-                .map(this::mapToPostResponse);
+                .map(post -> mapToPostResponse(post, null));
     }
 
-    private PostResponse mapToPostResponse(Post post) {
-        return new PostResponse(
-            post.getId(),
-            post.getTitle(),
-            post.getPromptText(),
-            post.getModelInfo(),
-            post.getAttachmentUrl(),
-            post.getUpvoteCount(),
-            post.isExplore(),
-            post.getUser() != null ? post.getUser().getId() : null, 
-            post.getUser() != null ? post.getUser().getUsername() : null,
-            post.getStatus(),                                             
-            post.getCreatedAt()
-        );
+    private PostResponse mapToPostResponse(Post post, User currentUser) {
+        boolean hasUpvoted = false;
+        if (currentUser != null) {
+            hasUpvoted = upvoteRepository.existsByUserAndPost(currentUser, post);
+        }
+        return PostResponse.fromEntity(post, hasUpvoted);
     }
 }
