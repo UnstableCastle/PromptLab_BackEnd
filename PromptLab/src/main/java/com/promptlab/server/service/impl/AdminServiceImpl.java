@@ -49,7 +49,8 @@ public class AdminServiceImpl implements AdminService {
     public List<PostResponse> getRecentPosts() {
         return postRepository.findTop5ByOrderByCreatedAtDesc()
                 .stream()
-                .map(PostResponse::fromEntity) // Convert JPA entities to clean DTOs
+                // Pass 'false' for the hasUpvoted parameter since this is an admin view
+                .map(post -> PostResponse.fromEntity(post, false)) 
                 .toList();
     }
 }

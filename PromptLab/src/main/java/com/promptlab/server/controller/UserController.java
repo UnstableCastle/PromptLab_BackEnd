@@ -4,8 +4,11 @@ import java.security.Principal;
 import java.util.List;
 
 import jakarta.validation.Valid;
+
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.promptlab.server.dto.UserProfileResponse;
 import com.promptlab.server.dto.UserUpdateRequest;
@@ -51,13 +54,16 @@ public class UserController {
         return ResponseEntity.ok(new ApiResponse<>(true, "User profile fetched successfully", userProfile));
     }
 
-    @PutMapping("/{id}")
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<UserProfileResponse>> updateUser(
             @PathVariable Long id, 
-            @Valid @RequestBody UserUpdateRequest request,
+            @RequestParam(value = "username", required = false) String username,
+            @RequestParam(value = "email", required = false) String email,
+            @RequestParam(value = "bio", required = false) String bio,
+            @RequestParam(value = "profilePicture", required = false) MultipartFile profilePictureFile,
             Principal principal) {
         String currentUsername = (principal != null) ? principal.getName() : null;
-        UserProfileResponse updatedUser = userService.updateUser(id, request, currentUsername);
+        UserProfileResponse updatedUser = userService.updateUserWithFile(id, username, email, bio, profilePictureFile, currentUsername);
         return ResponseEntity.ok(new ApiResponse<>(true, "User updated successfully", updatedUser));
     }
 

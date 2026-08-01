@@ -1,6 +1,9 @@
 package com.promptlab.server.controller;
 
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -8,154 +11,228 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
 import com.promptlab.server.dto.*;
 import com.promptlab.server.entity.User;
 import com.promptlab.server.payload.ApiResponse;
 import com.promptlab.server.service.*;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
-import org.springframework.http.HttpHeaders;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import jakarta.servlet.http.HttpServletRequest;
 
 @CrossOrigin(origins = "http://localhost:5173")
 @RestController
 @RequestMapping("/api/posts")
 public class PostController {
 
-	private final PostService postService;
-	private final UpvoteService upvoteService;
-	private final FileService fileService;
+    private final PostService postService;
+    private final UpvoteService upvoteService;
+    private final FileService fileService;
 
-	public PostController(PostService postService, UpvoteService upvoteService, FileService fileService) {
-		this.postService = postService;
-		this.upvoteService = upvoteService;
-		this.fileService = fileService;
-	}
+    public PostController(PostService postService,
+                          UpvoteService upvoteService,
+                          FileService fileService) {
+        this.postService = postService;
+        this.upvoteService = upvoteService;
+        this.fileService = fileService;
+    }
 
-	@PostMapping("/init")
-	public ResponseEntity<ApiResponse<PostResponse>> initializeDraft(@AuthenticationPrincipal User user) {
-		PostResponse draftPost = postService.createDraftPost(user);
-		return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse<>(true, "Draft initialized", draftPost));
-	}
+    @PostMapping("/init")
+    public ResponseEntity<ApiResponse<PostResponse>> initializeDraft(
+            @AuthenticationPrincipal User user) {
 
-	@PutMapping(value = "/{postId}/submit", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-	public ResponseEntity<ApiResponse<Object>> submitPost(@PathVariable Long postId, @AuthenticationPrincipal User user,
-			@RequestPart("postDetails") PostRequest request,
-			@RequestPart(value = "file", required = false) MultipartFile file) {
+        PostResponse draftPost = postService.createDraftPost(user);
 
-		String attachmentUrl = null;
-		if (file != null && !file.isEmpty()) {
-			attachmentUrl = fileService.uploadPostFile(postId, user, file);
-		}
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(new ApiResponse<>(true, "Draft initialized", draftPost));
+    }
 
-		Object finalizedPost = postService.finalizeDraft(postId, user, request, attachmentUrl);
-		return ResponseEntity.ok(new ApiResponse<>(true, "Post published successfully", finalizedPost));
-	}
+    @PutMapping(value = "/{postId}/submit", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<Object>> submitPost(
+            @PathVariable Long postId,
+            @AuthenticationPrincipal User user,
+            @RequestPart("postDetails") PostRequest request,
+            @RequestPart(value = "file", required = false) MultipartFile file) {
 
-//    DOWNLOAD FILE
-	@GetMapping("/download/**")
-	public ResponseEntity<Resource> downloadAttachment(HttpServletRequest request) throws Exception {
+        String attachmentUrl = null;
 
-		String uri = request.getRequestURI();
+        if (file != null && !file.isEmpty()) {
+            attachmentUrl = fileService.uploadPostFile(postId, user, file);
+        }
 
-		String relativePath = uri.substring(uri.indexOf("/download/") + "/download/".length());
+        Object finalizedPost = postService.finalizeDraft(postId, user, request, attachmentUrl);
 
-		relativePath = URLDecoder.decode(relativePath, StandardCharsets.UTF_8);
+        return ResponseEntity.ok(
+                new ApiResponse<>(true, "Post published successfully", finalizedPost));
+    }
 
-		Path filePath = Paths.get("uploads").resolve(relativePath).normalize().toAbsolutePath();
-		System.out.println(filePath);
-		System.out.println(Files.exists(filePath));
-		if (!Files.exists(filePath)) {
-			throw new RuntimeException("File not found: " + filePath);
-		}
+    // ================= DOWNLOAD FILE =================
 
-		Resource resource = new UrlResource(filePath.toUri());
+    @GetMapping("/download/**")
+    public ResponseEntity<Resource> downloadAttachment(HttpServletRequest request) throws Exception {
 
-		String contentType = Files.probeContentType(filePath);
+        String uri = request.getRequestURI();
 
-		if (contentType == null) {
-			contentType = MediaType.APPLICATION_OCTET_STREAM_VALUE;
-		}
-		System.out.println("DOWNLOAD API HIT===========");
+        String relativePath = uri.substring(uri.indexOf("/download/") + "/download/".length());
 
-		return ResponseEntity.ok().contentType(MediaType.parseMediaType(contentType))
-				.header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"")
-				.body(resource);
-	}
-//    =====================================================
+        relativePath = URLDecoder.decode(relativePath, StandardCharsets.UTF_8);
 
-	@GetMapping("/feed")
-	public ResponseEntity<ApiResponse<Page<PostResponse>>> getAllPosts(@RequestParam(defaultValue = "0") int page,
-			@RequestParam(defaultValue = "10") int size) {
-		Page<PostResponse> posts = postService.getAllPosts(page, size);
-		return ResponseEntity.ok(new ApiResponse<>(true, "Feed fetched successfully", posts));
-	}
+        Path filePath = Paths.get("uploads")
+                .resolve(relativePath)
+                .normalize()
+                .toAbsolutePath();
 
-	@GetMapping("/explore")
-	public ResponseEntity<ApiResponse<Page<PostResponse>>> getExplorePosts(@RequestParam(defaultValue = "0") int page,
-			@RequestParam(defaultValue = "10") int size) {
-		Page<PostResponse> posts = postService.getExplorePosts(page, size);
-		return ResponseEntity.ok(new ApiResponse<>(true, "Explore feed fetched successfully", posts));
-	}
+        System.out.println(filePath);
+        System.out.println(Files.exists(filePath));
 
-	@GetMapping("/search")
-	public ResponseEntity<ApiResponse<Page<PostResponse>>> searchPosts(@RequestParam("keyword") String keyword,
-			@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
-		Page<PostResponse> posts = postService.searchPosts(keyword, page, size);
-		return ResponseEntity.ok(new ApiResponse<>(true, "Search results fetched", posts));
-	}
+        if (!Files.exists(filePath)) {
+            throw new RuntimeException("File not found: " + filePath);
+        }
 
-	@Transactional(readOnly = true)
-	@GetMapping("/detail/{postId}")
-	public ResponseEntity<ApiResponse<Object>> getPostById(@PathVariable Long postId) {
-		Object post = postService.getPostById(postId);
-		return ResponseEntity.ok(new ApiResponse<>(true, "Post details fetched", post));
-	}
+        Resource resource = new UrlResource(filePath.toUri());
 
-	@PutMapping("/detail/{postId}")
-	public ResponseEntity<ApiResponse<Object>> updatePost(@PathVariable Long postId, @AuthenticationPrincipal User user,
-			@RequestBody PostRequest request) {
-		Object updatedPost = postService.updatePost(postId, user, request);
-		return ResponseEntity.ok(new ApiResponse<>(true, "Post updated successfully", updatedPost));
-	}
+        String contentType = Files.probeContentType(filePath);
 
-	@DeleteMapping("/detail/{postId}")
-	public ResponseEntity<ApiResponse<Void>> deletePost(@PathVariable Long postId, @AuthenticationPrincipal User user) {
-		postService.deletePost(postId, user);
-		return ResponseEntity.ok(new ApiResponse<>(true, "Post deleted successfully", null));
-	}
+        if (contentType == null) {
+            contentType = MediaType.APPLICATION_OCTET_STREAM_VALUE;
+        }
 
-	@PostMapping("/detail/{postId}/upvote")
-	public ResponseEntity<ApiResponse<Void>> toggleUpvote(@PathVariable Long postId,
-			@AuthenticationPrincipal User user) {
-		upvoteService.toggleUpvote(postId, user);
-		return ResponseEntity.ok(new ApiResponse<>(true, "Upvote toggled successfully", null));
-	}
+        System.out.println("DOWNLOAD API HIT===========");
 
-	@GetMapping("/user/{userId}/portfolio")
-	public ResponseEntity<ApiResponse<Page<PostResponse>>> getPostsByUserId(@PathVariable Long userId,
-			@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
-		Page<PostResponse> userPosts = postService.getPostsByUserId(userId, page, size);
-		return ResponseEntity.ok(new ApiResponse<>(true, "User portfolio fetched", userPosts));
-	}
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(contentType))
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"" + resource.getFilename() + "\"")
+                .body(resource);
+    }
 
-	@GetMapping("/me/portfolio")
-	public ResponseEntity<ApiResponse<Page<PostResponse>>> getMyPosts(@AuthenticationPrincipal User user,
-			@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
-		Page<PostResponse> userPosts = postService.getPostsByUserId(user.getId(), page, size);
-		return ResponseEntity.ok(new ApiResponse<>(true, "Your portfolio fetched", userPosts));
-	}
+    // =====================================================
 
-	@GetMapping("/me/drafts")
-	public ResponseEntity<ApiResponse<Page<PostResponse>>> getMyDrafts(@AuthenticationPrincipal User user,
-			@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
-		Page<PostResponse> drafts = postService.getUserDrafts(user.getId(), page, size);
-		return ResponseEntity.ok(new ApiResponse<>(true, "Drafts fetched", drafts));
-	}
+    @GetMapping("/feed")
+    public ResponseEntity<ApiResponse<Page<PostResponse>>> getAllPosts(
+            @AuthenticationPrincipal User user,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        Page<PostResponse> posts = postService.getAllPosts(user, page, size);
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(true, "Feed fetched successfully", posts));
+    }
+
+    @GetMapping("/explore")
+    public ResponseEntity<ApiResponse<Page<PostResponse>>> getExplorePosts(
+            @AuthenticationPrincipal User user,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        Page<PostResponse> posts = postService.getExplorePosts(user, page, size);
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(true, "Explore feed fetched successfully", posts));
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<ApiResponse<Page<PostResponse>>> searchPosts(
+            @AuthenticationPrincipal User user,
+            @RequestParam("keyword") String keyword,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        Page<PostResponse> posts = postService.searchPosts(keyword, user, page, size);
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(true, "Search results fetched", posts));
+    }
+
+    @Transactional(readOnly = true)
+    @GetMapping("/detail/{postId}")
+    public ResponseEntity<ApiResponse<Object>> getPostById(
+            @PathVariable Long postId,
+            @AuthenticationPrincipal User user) {
+
+        Object post = postService.getPostById(postId, user);
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(true, "Post details fetched", post));
+    }
+
+    @PutMapping("/detail/{postId}")
+    public ResponseEntity<ApiResponse<Object>> updatePost(
+            @PathVariable Long postId,
+            @AuthenticationPrincipal User user,
+            @RequestBody PostRequest request) {
+
+        Object updatedPost = postService.updatePost(postId, user, request);
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(true, "Post updated successfully", updatedPost));
+    }
+
+    @DeleteMapping("/detail/{postId}")
+    public ResponseEntity<ApiResponse<Void>> deletePost(
+            @PathVariable Long postId,
+            @AuthenticationPrincipal User user) {
+
+        postService.deletePost(postId, user);
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(true, "Post deleted successfully", null));
+    }
+
+    @PostMapping("/detail/{postId}/upvote")
+    public ResponseEntity<ApiResponse<Void>> toggleUpvote(
+            @PathVariable Long postId,
+            @AuthenticationPrincipal User user) {
+
+        upvoteService.toggleUpvote(postId, user);
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(true, "Upvote toggled successfully", null));
+    }
+
+    @GetMapping("/user/{userId}/portfolio")
+    public ResponseEntity<ApiResponse<Page<PostResponse>>> getPostsByUserId(
+            @PathVariable Long userId,
+            @AuthenticationPrincipal User user,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        Page<PostResponse> userPosts =
+                postService.getPostsByUserId(userId, user, page, size);
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(true, "User portfolio fetched", userPosts));
+    }
+
+    @GetMapping("/me/portfolio")
+    public ResponseEntity<ApiResponse<Page<PostResponse>>> getMyPosts(
+            @AuthenticationPrincipal User user,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        Page<PostResponse> userPosts =
+                postService.getPostsByUserId(user.getId(), user, page, size);
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(true, "Your portfolio fetched", userPosts));
+    }
+
+    @GetMapping("/me/drafts")
+    public ResponseEntity<ApiResponse<Page<PostResponse>>> getMyDrafts(
+            @AuthenticationPrincipal User user,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        Page<PostResponse> drafts =
+                postService.getUserDrafts(user.getId(), page, size);
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(true, "Drafts fetched", drafts));
+    }
 }

@@ -74,6 +74,7 @@ public class AuthServiceImpl implements AuthService {
         String accessToken = jwtService.generateAccessToken(user);
         RefreshToken refreshTokenEntity = createOrUpdateRefreshToken(user);
 
+        // ADDED: bio and profilePicture to the response
         return new AuthenticationResponse(
                 accessToken, 
                 refreshTokenEntity.getToken(), 
@@ -81,7 +82,9 @@ public class AuthServiceImpl implements AuthService {
                 user.getUsername(), 
                 user.getEmail(), 
                 user.getId(),
-                user.getRole().name()
+                user.getRole().name(),
+                user.getBio(),
+                user.getProfilePicture()
         );
     }
 
@@ -92,13 +95,18 @@ public class AuthServiceImpl implements AuthService {
                 .map(user -> {
                     String accessToken = jwtService.generateAccessToken(user);
                     RefreshToken refreshTokenEntity = createOrUpdateRefreshToken(user);
+                    
+                    // FIXED: Replaced null ID with user.getId(), and added bio and profilePicture
                     return new AuthenticationResponse(
                             accessToken, 
                             refreshTokenEntity.getToken(), 
                             "Bearer", 
                             user.getUsername(), 
                             user.getEmail(), 
-                            null, user.getRole().name()
+                            user.getId(), 
+                            user.getRole().name(),
+                            user.getBio(),
+                            user.getProfilePicture()
                     );
                 })
                 .orElseThrow(() -> new RuntimeException("Refresh token is invalid or missing!"));
