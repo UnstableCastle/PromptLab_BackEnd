@@ -27,7 +27,8 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     // Kept your old one just in case you need it elsewhere
     List<Post> findByUserId(Long userId);
 
-    // --- NEW QUERIES FOR CONTROLLER ---
+ // Add this to PostRepository.java
+     // --- NEW QUERIES FOR CONTROLLER ---
     
     // 1. For the /user/{userId}/portfolio & /me/portfolio endpoints (Paginated)
     @EntityGraph(attributePaths = {"user"})

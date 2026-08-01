@@ -5,6 +5,9 @@ import com.promptlab.server.entity.*;
 import com.promptlab.server.repository.*;
 import com.promptlab.server.service.PostService;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -153,5 +156,13 @@ public class PostServiceImpl implements PostService {
             hasUpvoted = upvoteRepository.existsByUserAndPost(currentUser, post);
         }
         return PostResponse.fromEntity(post, hasUpvoted);
+    }
+    @Override
+    @Transactional(readOnly = true)
+    public List<PostResponse> getPostByUserId(Long userId, User currentUser) {
+        // Removed the (List) cast from the beginning of postRepository
+        return postRepository.findByUserId(userId).stream()
+                .map(post -> mapToPostResponse(post, currentUser))
+                .collect(Collectors.toList());
     }
 }
