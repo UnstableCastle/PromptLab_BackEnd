@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.hibernate.annotations.CreationTimestamp;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.CascadeType;
@@ -23,7 +22,6 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -59,12 +57,14 @@ public class Post implements Serializable {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    
     @Size(max = 150)
     @Column(nullable = false, length = 150)
     private String title= "Untitled Draft";
 
-  
+    @Size(max = 255)
+    @Column(name = "original_filename")
+    private String originalFilename;
+    
     @Lob
     @Column(name = "prompt_text", nullable = false)
     private String promptText = "";
@@ -90,12 +90,9 @@ public class Post implements Serializable {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
     
-    
     @Builder.Default
     @Column(name = "status", nullable = false)
     private String status = "DRAFT";
-
-    // --- ADDED RELATIONSHIP FOR CASCADING DELETES ---
     
     @JsonIgnore
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -104,7 +101,4 @@ public class Post implements Serializable {
     @JsonIgnore
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Report> postReports = new ArrayList<>();
-    
- 
-    // -------------------------------------------------
 }

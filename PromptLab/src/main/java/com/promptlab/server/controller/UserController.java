@@ -29,7 +29,7 @@ public class UserController {
         this.followService = followService;
     }
 
-    @GetMapping
+    @GetMapping({"/getallusers"})
     public ResponseEntity<ApiResponse<List<UserProfileResponse>>> getAllUsers(Principal principal) {
         String currentUsername = (principal != null) ? principal.getName() : null;
         List<UserProfileResponse> users = userService.getAllUsers(currentUsername);
