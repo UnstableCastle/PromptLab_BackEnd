@@ -65,9 +65,9 @@ public class AuthController {
 //    }
 
 
-    @GetMapping("/me")
-    public ResponseEntity<ApiResponse<AccountDetailsResponse>> getCurrentUser(Principal principal) {
-        AccountDetailsResponse user = authService.getAccountDetails(principal.getName());
-        return ResponseEntity.ok(new ApiResponse<>(true, "Account details fetched successfully", user));
-    }
+//    @GetMapping("/me")
+//    public ResponseEntity<ApiResponse<AccountDetailsResponse>> getCurrentUser(Principal principal) {
+//        AccountDetailsResponse user = authService.getAccountDetails(principal.getName());
+//        return ResponseEntity.ok(new ApiResponse<>(true, "Account details fetched successfully", user));
+//    }
 }

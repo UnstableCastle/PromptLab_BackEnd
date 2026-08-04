@@ -14,14 +14,12 @@ import java.util.UUID;
 public class FileService {
 
     public String uploadPostFile(Long postId, User user, MultipartFile file) {
-
         if (file.isEmpty()) {
             throw new RuntimeException("Cannot upload an empty file");
         }
 
         try {
             Long userId = user.getId();
-
             String postSpecificDir = "uploads/users/" + userId + "/posts/" + postId + "/";
             File directory = new File(postSpecificDir);
 
@@ -30,25 +28,14 @@ public class FileService {
             }
 
             String originalFileName = file.getOriginalFilename();
-
-            // Split filename and extension
             String extension = "";
-            String fileName = originalFileName;
-
-            int dotIndex = originalFileName.lastIndexOf('.');
-            if (dotIndex != -1) {
-                fileName = originalFileName.substring(0, dotIndex);
-                extension = originalFileName.substring(dotIndex);
+            
+            if (originalFileName != null && originalFileName.contains(".")) {
+                extension = originalFileName.substring(originalFileName.lastIndexOf('.'));
             }
 
-            // Replace all unsafe characters
-            fileName = fileName.replaceAll("[^a-zA-Z0-9_-]", "_");
-
-            // Create unique filename
-            String uniqueFileName = UUID.randomUUID() + "_" + fileName + extension;
-
+            String uniqueFileName = UUID.randomUUID().toString() + extension;
             Path filePath = Paths.get(postSpecificDir, uniqueFileName);
-
             Files.write(filePath, file.getBytes());
 
             return "/" + postSpecificDir + uniqueFileName;

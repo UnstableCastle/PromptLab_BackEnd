@@ -44,7 +44,7 @@ public class PostServiceImpl implements PostService {
 
     @Override
     @Transactional
-    public Object finalizeDraft(Long postId, User user, PostRequest request, String attachmentUrl) {
+    public Object finalizeDraft(Long postId, User user, PostRequest request, String attachmentUrl, String originalFilename) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found with id: " + postId));
 
@@ -63,6 +63,7 @@ public class PostServiceImpl implements PostService {
         
         if (attachmentUrl != null) {
             post.setAttachmentUrl(attachmentUrl);
+            post.setOriginalFilename(originalFilename); 
         }
 
         Post updatedPost = postRepository.save(post);
@@ -157,12 +158,18 @@ public class PostServiceImpl implements PostService {
         }
         return PostResponse.fromEntity(post, hasUpvoted);
     }
+    
     @Override
     @Transactional(readOnly = true)
     public List<PostResponse> getPostByUserId(Long userId, User currentUser) {
-        // Removed the (List) cast from the beginning of postRepository
         return postRepository.findByUserId(userId).stream()
                 .map(post -> mapToPostResponse(post, currentUser))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public Post getPostEntity(Long postId) {
+        return postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("Post not found with id: " + postId));
     }
 }

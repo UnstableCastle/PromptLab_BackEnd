@@ -17,10 +17,6 @@ import com.promptlab.server.entity.User;
 import com.promptlab.server.payload.ApiResponse;
 import com.promptlab.server.service.*;
 
-import jakarta.servlet.http.HttpServletRequest;
-
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -60,12 +56,14 @@ public class PostController {
             @RequestPart(value = "file", required = false) MultipartFile file) {
 
         String attachmentUrl = null;
+        String originalFilename = null;
 
         if (file != null && !file.isEmpty()) {
+            originalFilename = file.getOriginalFilename();
             attachmentUrl = fileService.uploadPostFile(postId, user, file);
         }
 
-        Object finalizedPost = postService.finalizeDraft(postId, user, request, attachmentUrl);
+        Object finalizedPost = postService.finalizeDraft(postId, user, request, attachmentUrl, originalFilename);
 
         return ResponseEntity.ok(
                 new ApiResponse<>(true, "Post published successfully", finalizedPost));
@@ -73,41 +71,36 @@ public class PostController {
 
     // ================= DOWNLOAD FILE =================
 
-    @GetMapping("/download/**")
-    public ResponseEntity<Resource> downloadAttachment(HttpServletRequest request) throws Exception {
+    @GetMapping("/{postId}/download")
+    public ResponseEntity<Resource> downloadAttachment(@PathVariable Long postId) throws Exception {
+        
+        com.promptlab.server.entity.Post post = postService.getPostEntity(postId);
 
-        String uri = request.getRequestURI();
+        String fileUrl = post.getAttachmentUrl();
+        if (fileUrl == null || fileUrl.isEmpty()) {
+            throw new RuntimeException("No attachment found for this post.");
+        }
 
-        String relativePath = uri.substring(uri.indexOf("/download/") + "/download/".length());
-
-        relativePath = URLDecoder.decode(relativePath, StandardCharsets.UTF_8);
-
-        Path filePath = Paths.get("uploads")
-                .resolve(relativePath)
-                .normalize()
-                .toAbsolutePath();
-
-        System.out.println(filePath);
-        System.out.println(Files.exists(filePath));
+        String relativePath = fileUrl.startsWith("/") ? fileUrl.substring(1) : fileUrl;
+        Path filePath = Paths.get(relativePath).normalize().toAbsolutePath();
 
         if (!Files.exists(filePath)) {
-            throw new RuntimeException("File not found: " + filePath);
+            throw new RuntimeException("File is missing from the server.");
         }
 
         Resource resource = new UrlResource(filePath.toUri());
-
         String contentType = Files.probeContentType(filePath);
-
+        
         if (contentType == null) {
             contentType = MediaType.APPLICATION_OCTET_STREAM_VALUE;
         }
 
-        System.out.println("DOWNLOAD API HIT===========");
+        String downloadName = post.getOriginalFilename() != null ? post.getOriginalFilename() : "downloaded_file";
 
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(contentType))
                 .header(HttpHeaders.CONTENT_DISPOSITION,
-                        "attachment; filename=\"" + resource.getFilename() + "\"")
+                        "attachment; filename=\"" + downloadName + "\"")
                 .body(resource);
     }
 
@@ -203,9 +196,8 @@ public class PostController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
-        Page<PostResponse> userPosts =
-                postService.getPostsByUserId(userId, user, page, size);
-System.out.println("");
+        Page<PostResponse> userPosts = postService.getPostsByUserId(userId, user, page, size);
+
         return ResponseEntity.ok(
                 new ApiResponse<>(true, "User portfolio fetched", userPosts));
     }
@@ -216,8 +208,7 @@ System.out.println("");
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
-        Page<PostResponse> userPosts =
-                postService.getPostsByUserId(user.getId(), user, page, size);
+        Page<PostResponse> userPosts = postService.getPostsByUserId(user.getId(), user, page, size);
 
         return ResponseEntity.ok(
                 new ApiResponse<>(true, "Your portfolio fetched", userPosts));
@@ -229,8 +220,7 @@ System.out.println("");
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
-        Page<PostResponse> drafts =
-                postService.getUserDrafts(user.getId(), page, size);
+        Page<PostResponse> drafts = postService.getUserDrafts(user.getId(), page, size);
 
         return ResponseEntity.ok(
                 new ApiResponse<>(true, "Drafts fetched", drafts));
