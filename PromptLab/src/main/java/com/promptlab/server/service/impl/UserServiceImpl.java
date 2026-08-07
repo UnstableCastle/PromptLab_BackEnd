@@ -103,17 +103,22 @@ public class UserServiceImpl implements UserService {
         long followingCount = followRepository.countByFollower(targetUser);
         long postCount = postRepository.countByUser(targetUser); 
 
-        // FIXED: Restored the missing constructor arguments
-        return new UserProfileResponse(
-            targetUser.getUsername(),
-            targetUser.getBio(),
-            targetUser.getProfilePicture(),
-            targetUser.isPrivate(),
-            followerCount,
-            followingCount,
-            postCount,
-            followedByCurrentUser
-        );
+        // Using Lombok Builder to map ALL fields including the missing ones
+        return UserProfileResponse.builder()
+                .id(targetUser.getId())
+                .username(targetUser.getUsername())
+                .email(targetUser.getEmail())
+                .bio(targetUser.getBio())
+                .profilePicture(targetUser.getProfilePicture())
+                .isPrivate(targetUser.isPrivate())
+                // Assuming targetUser.getRole() returns an Enum, we convert it to String
+                .role(targetUser.getRole() != null ? targetUser.getRole().name() : null) 
+                .createdAt(targetUser.getCreatedAt())
+                .followersCount(followerCount)
+                .followingCount(followingCount)
+                .postsCount(postCount)
+                .followedByCurrentUser(followedByCurrentUser)
+                .build();
     }
 
     @Override
