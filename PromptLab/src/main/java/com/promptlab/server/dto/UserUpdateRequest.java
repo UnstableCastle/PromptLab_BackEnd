@@ -9,6 +9,8 @@ public record UserUpdateRequest(
 
     String profilePicture,
 
+    String email,
+    
     Boolean isPrivate
 
 ) {
