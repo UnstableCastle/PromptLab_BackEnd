@@ -46,6 +46,7 @@ public class UserController {
     }
 
     @GetMapping("/username/{username}")
+    
     public ResponseEntity<ApiResponse<UserProfileResponse>> getUserByUsername(
             @PathVariable String username, 
             Principal principal) {
