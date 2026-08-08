@@ -66,7 +66,7 @@ public class Post implements Serializable {
     private String originalFilename;
     
     @Lob
-    @Column(name = "prompt_text", nullable = false)
+    @Column(name = "prompt_text", nullable = false,length=512)
     private String promptText = "";
 
     @Size(max = 100)

@@ -74,7 +74,7 @@ public class AuthServiceImpl implements AuthService {
         String accessToken = jwtService.generateAccessToken(user);
         RefreshToken refreshTokenEntity = createOrUpdateRefreshToken(user);
 
-        // ADDED: bio and profilePicture to the response
+        
         return new AuthenticationResponse(
                 accessToken, 
                 refreshTokenEntity.getToken(), 
@@ -118,6 +118,8 @@ public class AuthServiceImpl implements AuthService {
         refreshTokenRepository.deleteByToken(request.refreshToken());
         refreshTokenRepository.flush();
     }
+    
+    
 
     private RefreshToken createOrUpdateRefreshToken(User user) {
         RefreshToken refreshToken = refreshTokenRepository.findByUser(user)
@@ -125,6 +127,8 @@ public class AuthServiceImpl implements AuthService {
         
         refreshToken.setUser(user);
         refreshToken.setToken(jwtService.generateRefreshToken());
+        
+        
         
         return refreshTokenRepository.save(refreshToken);
     }
