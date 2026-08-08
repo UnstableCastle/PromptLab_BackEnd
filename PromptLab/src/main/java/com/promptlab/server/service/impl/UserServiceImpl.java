@@ -55,6 +55,7 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public UserProfileResponse updateUser(Long id, UserUpdateRequest request, String currentUsername) {
         User user = userRepository.findById(id)
+        		
                 .orElseThrow(() -> new RuntimeException("User not found with ID: " + id));
 
         if (request.bio() != null) user.setBio(request.bio());
@@ -148,6 +149,6 @@ public class UserServiceImpl implements UserService {
         }
 
         userRepository.save(user);
-        return mapToUserProfileResponse(user, currentUsername);
+        return mapToUserProfileResponse(user, user.getUsername());
     }
 }

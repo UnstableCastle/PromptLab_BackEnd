@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 @Data
 @Builder
@@ -21,13 +22,18 @@ public class UserProfileResponse {
     private String role;
     private LocalDateTime createdAt;
     
-    // Updated from int to long to perfectly match JPA count() returns
     private long followersCount;
     private long followingCount;
     private long postsCount;
     
-    // Added the missing field expected by the service
     private boolean followedByCurrentUser;
+
+    // --- NEW TOKEN FIELDS ---
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private String accessToken;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private String refreshToken;
 
     // Properly mapped 8-argument constructor used by UserServiceImpl
     public UserProfileResponse(String username, String bio, String profilePicture, boolean isPrivate,
